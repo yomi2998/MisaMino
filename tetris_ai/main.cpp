@@ -361,12 +361,12 @@ void tetris_draw(const TetrisGame& tetris, bool showAttackLine, bool showGrid) {
         }
         setcolor (EGERGB(0x00, 0xA0, 0xff));
         xyprintf(int(tetris.m_base.x + tetris.m_size.x * (5)), int(tetris.m_base.y + tetris.m_size.y * ( tetris.poolh() + 0 ) + 1 ),
-            info.c_str() );
+            "%s", info.c_str() );
         tetris.m_att_info = info;
     } else {
         setcolor (EGERGB(0x40, 0x40, 0x40));
         xyprintf(int(tetris.m_base.x + tetris.m_size.x * (5)), int(tetris.m_base.y + tetris.m_size.y * ( tetris.poolh() + 0 ) + 1 ),
-            tetris.m_att_info.c_str() );
+            "%s", tetris.m_att_info.c_str() );
     }
     setcolor (EGERGB(0xa0, 0xa0, 0xa0));
     if ( ! tetris.alive() ) {
@@ -586,7 +586,7 @@ void loadAI(CProfile& config, tetris_ai ai[]) {
     }
 }
 void loadRule(CProfile& config, tetris_rule& rule) {
-	int kos_turnbase;
+	int kos_turnbase = 1;
     config.SetSection( "Rule" );
     if ( config.IsInteger( "turnbase" ) ) {
         rule.turnbase = config.ReadInteger( "turnbase" );
@@ -657,8 +657,13 @@ void loadPlayerSetting(CProfile& config, tetris_player& player) {
 }
 
 std::string getpath( std::string path ) {
-    for ( int i = path.size() - 1; path[i] != '/' && path[i] != '\\'; --i) path[i] = 0;
-    return path.c_str();
+    for ( size_t i = path.size(); i-- > 0; ) {
+        if ( path[i] == '/' || path[i] == '\\' ) {
+            path.resize(i + 1);
+            break;
+        }
+    }
+    return path;
 }
 
 void mainscene() {
@@ -783,7 +788,8 @@ void mainscene() {
         typedef int (*AIDllVersion_t)();
         AIDllVersion_t pAIDllVersion = NULL;
         char path[MAX_PATH];
-        ::GetCurrentDirectoryA(MAX_PATH, path);
+        path[0] = 0;
+        if ( ::GetCurrentDirectoryA(MAX_PATH, path) == 0 ) path[0] = 0;
         for ( int i = 0; i < players_num; ++i ) {
             if ( ai[i].style == -1 )
             {
@@ -1075,7 +1081,7 @@ void mainscene() {
     }
     double ai_time = 0;
     int lastGameState = -1;
-	bool sw;
+	bool sw = false;
     for ( ; is_run() ; normal_delay ? delay_fps(60) : delay_ms(0) ) {
         for ( int jf = 0; jf < mainloop_times; ++jf) {
 
@@ -1210,7 +1216,7 @@ void mainscene() {
                     }
                     if ( k.key == key_f12 ) {
                         setkeyScene( player_keys );
-                        for ( int i = 0; i < 7; ++i)
+                        for ( int i = 0; i < 9; ++i)
                             player_key_state[i] = 0;
                     }
                     if ( k.key == key_f3 ) {

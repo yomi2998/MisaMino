@@ -36,7 +36,7 @@ namespace AI {
             int total_pc;
             int total_b2b;
             int total_cb_att;
-            int t[4];
+            int t[5];
             int normal[5];
             void reset( int _gem_num ) {
                 memset(this, 0, sizeof(*this));

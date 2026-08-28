@@ -69,7 +69,8 @@ namespace AI {
 #ifdef SWITCH_USING_HEIGHT_OPT
         // height of every column
         int field_w = field.width(), field_h = field.height();
-        int min_y[32] = {0};
+        int min_y_buf[40] = {0};
+        int *const min_y = min_y_buf + 4;
         {
             int beg_y = -5;
             while ( field.row[beg_y] == 0 ) ++beg_y;

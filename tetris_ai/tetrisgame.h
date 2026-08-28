@@ -272,11 +272,13 @@ public:
                     if (m.isOpen()) m.play( m_lr );
                 }
             } else {
+                int sidx = m_clear_info.clears;
+                if ( sidx > 3 ) sidx = 3;
                 if ( b2b ) {
-                    GameSound::sound& m = GameSound::ins().mSFX_b2b_tspin[m_clear_info.clears];
+                    GameSound::sound& m = GameSound::ins().mSFX_b2b_tspin[sidx];
                     if (m.isOpen()) m.play( m_lr );
                 } else {
-                    GameSound::sound& m = GameSound::ins().mSFX_tspin[m_clear_info.clears];
+                    GameSound::sound& m = GameSound::ins().mSFX_tspin[sidx];
                     if (m.isOpen()) m.play( m_lr );
                 }
            }

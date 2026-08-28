@@ -77,6 +77,10 @@ namespace AI {
 
     void GenMoving(const GameField& field, std::vector<MovingSimple> & movs, Gem cur, int x, int y, bool hold) {
         assert( cur.num != 0 );
+        if ( cur.num < 1 || cur.num > 7 ) {
+            movs.clear();
+            return ;
+        }
         movs.clear();
         if ( field.isCollide(x, y, getGem(cur.num, cur.spin) ) ) {
             return ;
@@ -93,7 +97,8 @@ namespace AI {
 #ifdef SWITCH_USING_HEIGHT_OPT
         // height of every column
         int field_w = field.width(), field_h = field.height();
-        int min_y[32] = {0};
+        int min_y_buf[40] = {0};
+        int *const min_y = min_y_buf + 4;
         {
             int beg_y = -5;
             while ( field.row[beg_y] == 0 ) ++beg_y;
@@ -228,7 +233,7 @@ namespace AI {
         while ( ! q.empty() ) {
             MovingSimple m;
             q.pop(m);
-            //if ( m.y < -1 ) continue;
+            if ( m.y < -3 ) continue;
             if ( m.lastmove == MovingSimple::MOV_DROP ) {
                 if ( getGemMaxH(cur.num, m.spin) + m.y <= 2 ) //lockout
                     continue;
@@ -459,6 +464,10 @@ namespace AI {
     }
 
     void FindPathMoving(const GameField& field, std::vector<Moving> & movs, Gem cur, int x, int y, bool hold) {
+        if ( cur.num < 1 || cur.num > 7 ) {
+            movs.clear();
+            return ;
+        }
         movs.clear();
         if ( field.isCollide(x, y, getGem(cur.num, cur.spin) ) ) {
             return ;
@@ -486,6 +495,7 @@ namespace AI {
         while ( ! q.empty() ) {
             Moving m;
             q.pop(m);
+            if ( m.y < -3 ) continue;
             if ( m.movs.back() == Moving::MOV_DROP) {
                 movs.push_back(m);
                 continue;

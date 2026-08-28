@@ -251,6 +251,7 @@ public:
             if ( find_best ) break;
         }
         // */
+        while ( ai.size() < 2 ) ai.push_back( ai.front() );
         p1 = ai[0].ai;
         p2 = ai[1].ai;
         //p2 = ai[0].ai;

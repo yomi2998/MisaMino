@@ -50,8 +50,10 @@ namespace AI {
         int score = 0;
         // 测高度
         //int last_min_y[32] = {0};
-        int min_y[32] = {0};
-        int emptys[32] = {0};
+        int min_y_buf[40] = {0};
+        int *const min_y = min_y_buf + 3;
+        int emptys_buf[40] = {0};
+        int *const emptys = emptys_buf + 8;
         int maxy_index = 31, maxy_cnt = 0;
         int maxy_flat_cnt = 0; // 最长平台
         int miny_val = 31;
@@ -132,9 +134,11 @@ namespace AI {
             }
         }
         // 洞的数量
-        int x_holes[32] = {0}; // 水平方向洞的数量
+        int x_holes_buf[40] = {0};
+        int *const x_holes = x_holes_buf + 8; // 水平方向洞的数量
         int y_holes[32] = {0}; // 垂直方向洞的数量
-        int x_op_holes[32] = {0}; // 水平方向洞的数量
+        int x_op_holes_buf[40] = {0};
+        int *const x_op_holes = x_op_holes_buf + 8; // 水平方向洞的数量
         //int last_pool_hole_score;
         int pool_hole_score;
         int pool_total_cell = 0;
@@ -867,7 +871,7 @@ namespace AI {
                             }
                         }
                         {
-                            int e = ~(pool.row[y] | (1<<x-2)) & pool.m_w_mask;
+                            int e = ~(pool.row[y] | (1<<(x-2))) & pool.m_w_mask;
                             e &= ( e-1);
                             if ( (e & ( e-1)) == 0 ) { // 底二只剩两空
                                 //++full;
@@ -1108,6 +1112,7 @@ namespace AI {
             :hash(_hash)
             ,hold(_hold)
             ,att(_att)
+            ,clear(_clear)
             ,combo(_combo)
             ,b2b(_b2b)
         {
@@ -1585,7 +1590,7 @@ namespace AI {
         if ( ai_settings[player].hash && canhold && search_nodes < max_search_nodes ) { // extra search
             std::swap(pq_last, pq);
             pq->clear();
-            int depth = searchDeep - 1;
+            int depth = searchDeep > 0 ? searchDeep - 1 : 0;
 #if defined(XP_RELEASE)
             int (*sw_map)[8] = sw_map1;
             if ( ai_settings[player].hash )
@@ -1642,6 +1647,9 @@ namespace AI {
                 int t_dis = 14;
                 int d_pos = depth + next_add;
                 int cur_num = ms_last.pool_last.m_hold;
+                if ( cur_num < 1 || cur_num > 7 ) {
+                    continue;
+                }
                 for ( size_t i = 0; d_pos + 1 + i < next.size(); ++i ) {
                     if ( next[d_pos + 1 + i].num == GEMTYPE_T ) {
                         t_dis = i;
@@ -1833,7 +1841,14 @@ namespace AI {
     }
     int RunAI(Moving& ret_mov, std::atomic<int>& flag, const AI_Param& ai_param, const GameField& pool, int hold, Gem cur, int x, int y, const std::vector<Gem>& next, bool canhold, int upcomeAtt, int maxDeep, int & searchDeep, int level, int player) {
         flag = 0;
-        _beginthread(AI_Thread, 0, new AI_THREAD_PARAM(NULL, ret_mov, flag, ai_param, pool, hold, cur, x, y, next, canhold, upcomeAtt, maxDeep, searchDeep, level, player) );
+        AI_THREAD_PARAM* pparam = new AI_THREAD_PARAM(NULL, ret_mov, flag, ai_param, pool, hold, cur, x, y, next, canhold, upcomeAtt, maxDeep, searchDeep, level, player);
+        if ( _beginthread(AI_Thread, 0, pparam ) == (unsigned long)-1 ) {
+            delete pparam;
+            ret_mov.movs.clear();
+            ret_mov.movs.push_back( Moving::MOV_NULL );
+            ret_mov.movs.push_back( Moving::MOV_DROP );
+            flag = -1;
+        }
         return 0;
     }
     void AI_Thread_Dll( void* lpParam ) {
@@ -1845,22 +1860,25 @@ namespace AI {
             int overfield[32];
             int field[32];
             char next[32];
-            int comboTable[32];
+            int comboTable[33];
             char gemMap[] = " ITLJZSO";
             for ( int iy = 0; iy <= gamefield.height(); ++iy ) {
                 field[iy] = gamefield.row[iy];
             }
             for ( int iy = 0; iy < 16; ++iy ) {
-                overfield[iy] = gamefield.row[-iy-1];
+                int oy = -iy - 1;
+                overfield[iy] = ( oy >= -gem_add_y ) ? gamefield.row[oy] : 0;
             }
             if ( p->maxDeep > 6 ) p->maxDeep = 6;
             for ( int i = 0; i < p->maxDeep; ++i ) {
                 next[i] = gemMap[p->next[i].num];
             }
-            for ( int i = 0; i < g_combo_attack.size(); ++i ) {
+            int combo_cnt = (int)g_combo_attack.size();
+            if ( combo_cnt > 31 ) combo_cnt = 31;
+            for ( int i = 0; i < combo_cnt; ++i ) {
                 comboTable[i] = g_combo_attack[i];
-                if ( i + 1 == g_combo_attack.size() ) comboTable[i+1] = -1;
             }
+            comboTable[combo_cnt] = -1;
 
             char* pOutStr = p->func(overfield, field, gamefield.width(), gamefield.height(), gamefield.b2b, gamefield.combo,
                 next, gemMap[gamefield.m_hold], !p->hold, gemMap[p->cur.num], p->x, p->y, p->cur.spin,
@@ -1880,8 +1898,8 @@ namespace AI {
             outMap['v'] = AI::Moving::MOV_HOLD;
             outMap['V'] = AI::Moving::MOV_DROP;
             AI::Moving mov;
-            for ( ; *pOutStr; ++pOutStr ) {
-                mov.movs.push_back( outMap[*pOutStr] );
+            for ( char* pout = pOutStr; pout && *pout; ++pout ) {
+                mov.movs.push_back( outMap[*pout] );
             }
             *p->ret_mov = mov;
         }
@@ -1891,7 +1909,14 @@ namespace AI {
     }
     int RunAIDll(TetrisAI_t func, Moving& ret_mov, std::atomic<int>& flag, const AI_Param& ai_param, const GameField& pool, int hold, Gem cur, int x, int y, const std::vector<Gem>& next, bool canhold, int upcomeAtt, int maxDeep, int & searchDeep, int level, int player) {
         flag = 0;
-        _beginthread(AI_Thread_Dll, 0, new AI_THREAD_PARAM(func, ret_mov, flag, ai_param, pool, hold, cur, x, y, next, canhold, upcomeAtt, maxDeep, searchDeep, level, player) );
+        AI_THREAD_PARAM* pparam = new AI_THREAD_PARAM(func, ret_mov, flag, ai_param, pool, hold, cur, x, y, next, canhold, upcomeAtt, maxDeep, searchDeep, level, player);
+        if ( _beginthread(AI_Thread_Dll, 0, pparam ) == (unsigned long)-1 ) {
+            delete pparam;
+            ret_mov.movs.clear();
+            ret_mov.movs.push_back( Moving::MOV_NULL );
+            ret_mov.movs.push_back( Moving::MOV_DROP );
+            flag = -1;
+        }
         return 0;
     }
 

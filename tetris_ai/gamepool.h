@@ -31,7 +31,7 @@ namespace AI {
     struct GameField {
         signed char m_w, m_h;
         signed short combo;
-        signed char b2b;
+        signed short b2b;
         unsigned long m_w_mask;
         unsigned long m_row[AI_POOL_MAX_H];
         int m_hold;
@@ -71,6 +71,7 @@ namespace AI {
             }
         }
         GameField& operator = (const GameField& field) {
+            if ( this == &field ) return *this;
             memcpy( this, &field, (size_t)&row - (size_t)this );
             row = m_row + ( field.row - field.m_row );
             return *this;
@@ -90,8 +91,12 @@ namespace AI {
         inline
         bool isCollide(int y, const Gem & gem) const {
             for ( int h = 3; h >= 0; --h ) {
-                if ( y + h > m_h && gem.bitmap[h] ) return true;
-                if ( row[y + h] & gem.bitmap[h] ) return true;
+                if ( y + h < -gem_add_y ) {
+                    if ( gem.bitmap[h] ) return true;
+                } else {
+                    if ( y + h > m_h && gem.bitmap[h] ) return true;
+                    if ( row[y + h] & gem.bitmap[h] ) return true;
+                }
             }
             return false;
         }
@@ -107,8 +112,12 @@ namespace AI {
                     if ( (gem.bitmap[h] << x) & ~m_w_mask ) return true;
                     _gem.bitmap[h] <<= x;
                 }
-                if ( y + h > m_h && _gem.bitmap[h] ) return true;
-                if ( row[y + h] & _gem.bitmap[h] ) return true;
+                if ( y + h < -gem_add_y ) {
+                    if ( _gem.bitmap[h] ) return true;
+                } else {
+                    if ( y + h > m_h && _gem.bitmap[h] ) return true;
+                    if ( row[y + h] & _gem.bitmap[h] ) return true;
+                }
             }
             return false; //isCollide(y, _gem);
         }
@@ -195,6 +204,7 @@ namespace AI {
         }
         void paste(int x, int y, const Gem & gem) {
             for ( int h = 0; h < gem.geth(); ++h ) {
+                if ( gem.bitmap[h] == 0 ) continue;
                 if (x >= 0)
                     row[y + h] |= gem.bitmap[h] << x;
                 else
@@ -258,11 +268,11 @@ namespace AI {
                 row[h] = 0;
             }
             if ( clearnum > 0 ) {
-                ++combo;
+                if ( combo < 1000 ) ++combo;
                 if ( clearnum == 4 ) {
-                    ++b2b;
+                    if ( b2b < 1000 ) ++b2b;
                 } else if ( _wallkick_spin > 0 ) {
-                    ++b2b;
+                    if ( b2b < 1000 ) ++b2b;
                 } else {
                     b2b = 0;
                 }

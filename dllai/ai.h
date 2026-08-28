@@ -75,7 +75,7 @@ namespace AI {
         signed char spin;
         signed char wallkick_spin;
         bool hold;
-        MovingSimple () { x = INVALID_POS; wallkick_spin = 0; lastmove = MovingSimple::MOV_NULL; }
+        MovingSimple () { x = INVALID_POS; y = 0; spin = 0; wallkick_spin = 0; hold = false; lastmove = MovingSimple::MOV_NULL; }
         MovingSimple ( const Moving & m ) {
             x = m.x;
             y = m.y;
