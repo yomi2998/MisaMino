@@ -114,7 +114,7 @@ namespace AI {
                 int nx = m.x, ny = m.y, ns = m.spin;
                 int wallkick_spin = m.wallkick_spin;
 #ifndef SWITCH_USING_HEIGHT_OPT
-                while ( field.row[ny + cur.geth()] == 0 && ny + cur.geth() <= field.height() ) { // ·Ç¿ÕÆøÐÐ²ÅÄÜÊ¹ÓÃµÄÓÅ»¯
+                while ( field.row[ny + cur.geth()] == 0 && ny + cur.geth() <= field.height() ) { // éžç©ºæ°”è¡Œæ‰èƒ½ä½¿ç”¨çš„ä¼˜åŒ–
                     ++ny; wallkick_spin = 0;
                 }
                 while ( ! field.isCollide(nx, ny + 1, getGem(cur.num, ns) ) ) {
@@ -342,7 +342,7 @@ namespace AI {
             {
                 int nx = m.x, ny = m.y, ns = m.spin;
                 int wallkick_spin = m.wallkick_spin;
-                //while ( field.row[ny + cur.geth()] == 0 && ny + cur.geth() <= field.height() ) { // ·Ç¿ÕÆøÐÐ²ÅÄÜÊ¹ÓÃµÄÓÅ»¯
+                //while ( field.row[ny + cur.geth()] == 0 && ny + cur.geth() <= field.height() ) { // éžç©ºæ°”è¡Œæ‰èƒ½ä½¿ç”¨çš„ä¼˜åŒ–
                 //    ++ny; wallkick_spin = 0;
                 //}
                 while ( ! field.isCollide(nx, ny + 1, getGem(cur.num, ns) ) ) {

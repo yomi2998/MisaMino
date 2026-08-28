@@ -1,0 +1,25 @@
+*.cpp text working -encoding=utf-8
+*.h text working -encoding=utf-8
+*.md text working -encoding=utf-8
+*.txt text working -encoding=utf-8
+*.rc binary
+*.ico binary
+*.dll binary
+*.lib binary
+*.exe binary
+*.pdb binary
+*.ilk binary
+*.obj binary
+*.exp binary
+*.iobj binary
+*.ipdb binary
+*.tlog binary
+*.vsidx binary
+*.db binary
+*.suo binary
+*.ini text
+*.cfg text
+*.lua text
+*.ps1 text
+*.sh text eol=lf
+*.ttf binary

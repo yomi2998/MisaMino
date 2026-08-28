@@ -734,7 +734,7 @@ void mainscene() {
         (AI_SHOW ) ? ( GAMEMODE_4W ? 2: 16 ) : ( PLAYER_WAIT ? 2 : 10 ) )
         );
     ai_mov_time /= 2; // fps=60
-    int ai_mov_time_base = 13; // Êµ¼ÊÖµÓÉai_mov_time¾ö¶¨£¬³õÊ¼Öµ²»ÓÃ¹Ü
+    int ai_mov_time_base = 13; // å®é™…å€¼ç”±ai_mov_timeå†³å®šï¼Œåˆå§‹å€¼ä¸ç”¨ç®¡
 
     int player_key_state[9] = {0};
     int player_last_key = 0;
@@ -1209,7 +1209,7 @@ void mainscene() {
             }
             for ( int i = 0; i < players_num; ++i ) {
 
-                if ( tetris[i].game() ) { // ÓÎÏ·Ö´ĞĞ£¬Èç¹û¶ªÏÂ·µ»Øtrue
+                if ( tetris[i].game() ) { // æ¸¸æˆæ‰§è¡Œï¼Œå¦‚æœä¸¢ä¸‹è¿”å›true
 					if(i != 0)
 						sw = true;
                     tetris[i].env_change = 1;
@@ -1223,7 +1223,7 @@ void mainscene() {
                     tetris[i].m_clearLines = 0;
                     tetris[i].m_attack = 0;
                     tetris[i].clearSFX( );
-                    if ( att > 0 ) { // Á½ĞĞ¹¥»÷
+                    if ( att > 0 ) { // ä¸¤è¡Œæ”»å‡»
                         tetris[i].total_atts += att;
                         if ( rule.GarbageCancel ) {
                             while ( att > 0 && ! tetris[i].accept_atts.empty() ) {
@@ -1269,7 +1269,7 @@ void mainscene() {
                         }
                     }
                 }
-                if ( tetris[i].env_change && tetris[i].ai_movs_flag == -1) { // AI ¼ÆËã
+                if ( tetris[i].env_change && tetris[i].ai_movs_flag == -1) { // AI è®¡ç®—
                     if ( ai[i].style && tetris[i].alive() && ( tetris[i].env_change != 2 || ( tetris[i].ai_plan_started == 0 && tetris[i].ai_plan_replans < 2 ) ) ) {
                     //if ( i != 0 && tetris[i].alive() ) {
                         std::vector<AI::Gem> next;
@@ -1283,7 +1283,7 @@ void mainscene() {
                         //if ( tetris[i].m_pool.row[6] ) {
                         //    deep = ai_search_height_deep;
                         //}
-                        if ( i == 1 && rule.turn == 1 && rule.turnbase && level > 9 ) { // ·À2P±»³¬Ô½Ì«¶à
+                        if ( i == 1 && rule.turn == 1 && rule.turnbase && level > 9 ) { // é˜²2Pè¢«è¶…è¶Šå¤ªå¤š
                             if ( tetris[0].n_pieces * ai[1].PieceMul - tetris[i].n_pieces * ai[0].PieceMul > 2 ) {
                                 level = 9;
                             }
@@ -1313,7 +1313,7 @@ void mainscene() {
                         } else {
                             tetris[i].ai_delay = ai_first_delay;
                         }
-                        if ( tetris[i].env_change == 2 ) { // ±»¹¥»÷¾Í°´ÒÑµÈ´ıÊ±¼ä¼õÉÙË¼Ë÷µÈ´ı
+                        if ( tetris[i].env_change == 2 ) { // è¢«æ”»å‡»å°±æŒ‰å·²ç­‰å¾…æ—¶é—´å‡å°‘æ€ç´¢ç­‰å¾…
                             tetris[i].ai_delay = max(0, tetris[i].ai_delay - tetris[i].m_piecedelay);
                         }
                     }
