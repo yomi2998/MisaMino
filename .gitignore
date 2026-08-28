@@ -28,7 +28,6 @@
 *.app
 **/Debug
 **/Release
-**/XP_Release
 **/.vs
 **/bin
 **/stress
