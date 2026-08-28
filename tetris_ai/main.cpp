@@ -1269,6 +1269,8 @@ void mainscene() {
 					if(i != 0)
 						sw = true;
                     tetris[i].env_change = 1;
+                    tetris[i].ai_plan_started = 0;
+                    tetris[i].ai_plan_replans = 0;
                     tetris[i].n_pieces += 1;
 
                     int att = tetris[i].m_attack;
@@ -1333,7 +1335,7 @@ void mainscene() {
                     }
                 }
                 if ( tetris[i].env_change && tetris[i].ai_movs_flag == -1) { // AI º∆À„
-                    if ( (ai_eve || ai[i].style) && tetris[i].alive() ) {
+                    if ( (ai_eve || ai[i].style) && tetris[i].alive() && ( tetris[i].env_change != 2 || ( tetris[i].ai_plan_started == 0 && tetris[i].ai_plan_replans < 2 ) ) ) {
                     //if ( i != 0 && tetris[i].alive() ) {
                         std::vector<AI::Gem> next;
                         for ( int j = 0; j < 32; ++j)
@@ -1341,6 +1343,7 @@ void mainscene() {
                         double beg = (double)::GetTickCount() / 1000;
                         int deep = ai_search_height_deep;
                         int upcomeAtt = std::accumulate(tetris[i].accept_atts.begin(), tetris[i].accept_atts.end(), 0);
+                        if ( tetris[i].env_change == 2 && tetris[i].ai_plan_started == 0 ) ++tetris[i].ai_plan_replans;
                         int level = ai[i].level;
                         //if ( tetris[i].m_pool.row[6] ) {
                         //    deep = ai_search_height_deep;
@@ -1351,6 +1354,7 @@ void mainscene() {
                             }
                         }
                         bool canhold = tetris[i].hold;
+                        tetris[i].ai_plan_started = 0;
 
                         if ( tetris[i].pTetrisAI ) {
                             AI::RunAIDll(tetris[i].pTetrisAI, tetris[i].ai_movs, tetris[i].ai_movs_flag, tetris[i].m_ai_param, tetris[i].m_pool, tetris[i].m_hold,
@@ -1415,7 +1419,7 @@ void mainscene() {
                     do
                     {
                         if ( tetris[i].ai_delay > 0 ) ;
-                        else if ( tetris[i].ai_movs_flag == -1 && tetris[i].env_change == 0 && ! tetris[i].ai_movs.movs.empty() ){
+                        else if ( tetris[i].ai_movs_flag == -1 && ( tetris[i].env_change == 0 || tetris[i].ai_plan_started || tetris[i].ai_plan_replans >= 2 ) && ! tetris[i].ai_movs.movs.empty() ){
                             if ( rule.turnbase && ai[0].style == 0 ) {
                                 tetris[i].ai_delay = ai_mov_time_base;
                             } else {
@@ -1427,6 +1431,7 @@ void mainscene() {
                                 if ( mov != next_mov ) tetris[i].ai_delay = tetris[i].ai_delay * 8 / 12;
                             }
                             tetris[i].ai_movs.movs.erase( tetris[i].ai_movs.movs.begin() );
+                            tetris[i].ai_plan_started = tetris[i].ai_movs.movs.empty() ? 0 : 1;
                             if (0) ;
                             else if (mov == AI::Moving::MOV_L) tetris[i].tryXMove(-1);
                             else if (mov == AI::Moving::MOV_R) tetris[i].tryXMove( 1);
@@ -1447,7 +1452,7 @@ void mainscene() {
                                 tetris[i].env_change = 1;
                             }
                         }
-                    } while ( tetris[i].ai_movs_flag == -1 && tetris[i].env_change == 0 && tetris[i].ai_delay == 0 && !tetris[i].ai_movs.movs.empty() );
+                    } while ( tetris[i].ai_movs_flag == -1 && ( tetris[i].env_change == 0 || tetris[i].ai_plan_started || tetris[i].ai_plan_replans >= 2 ) && tetris[i].ai_delay == 0 && !tetris[i].ai_movs.movs.empty() );
                 }
             }
             if ( ! ai_eve ) break;

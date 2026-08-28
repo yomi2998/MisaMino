@@ -29,6 +29,8 @@ public:
 		hx(ai_delay);
 		hx(mov_llrr );
 		hx(env_change );
+		hx(ai_plan_started);
+		hx(ai_plan_replans);
 		hx(accept_atts);
 		hx(n_pieces );
 		hx(ai_last_deep );
@@ -74,6 +76,8 @@ public:
         ai_delay = 0;
         mov_llrr = 0;
         env_change = 0;
+        ai_plan_started = 0;
+        ai_plan_replans = 0;
         n_win = 0;
         last_max_combo = 0;
         mSFXon = false;
@@ -170,6 +174,8 @@ public:
         ai_delay = 0;
         mov_llrr = 0;
         env_change = 0;
+        ai_plan_started = 0;
+        ai_plan_replans = 0;
         ai_movs.movs.clear();
         n_pieces = 0;
         ai_last_deep = 0;
@@ -369,6 +375,8 @@ public:
     AI::TetrisAI_t pTetrisAI;
     int mov_llrr;
     int env_change;
+    int ai_plan_started;
+    int ai_plan_replans;
     int n_pieces;
     std::vector<int> accept_atts;
     int m_last_hole_x;
