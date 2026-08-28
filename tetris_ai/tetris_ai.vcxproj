@@ -128,7 +128,6 @@
     <ClCompile Include="tetris_gem.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="gamemode.h" />
     <ClInclude Include="gamepool.h" />
     <ClInclude Include="Profile.h" />
     <ClInclude Include="random.h" />

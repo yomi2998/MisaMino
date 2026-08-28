@@ -2,7 +2,6 @@
 #define _ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH
 
 #include "tetrisgame.h"
-#include "gamemode.h"
 
 #include "graphics.h"
 
@@ -295,19 +294,11 @@ void tetris_draw(const TetrisGame& tetris, bool showAttackLine, bool showGrid) {
             int(tetris.m_base.y + tetris.m_size.y * ( 4 ) + 1 ),
             200,
             400,
-#ifdef XP_RELEASE
             "Win %4d\nPPS %.2f\nAPM %4.1f\nAtt %4d\nSent %3d\nRecv %3d\nAPL %.2f\nAPP %.3f\nCombo %2d\nClear %2d\nCbA %4d\nB2B %4d\nT0 %5d\nT1 %5d\nT2 %5d\nT3 %5d\n1 %6d\n2 %6d\n3 %6d\n4 %6d\n",
             tetris.n_win, pps, apm, tetris.total_atts, tetris.total_sent, tetris.total_accept_atts, apl, app, tetris.m_max_combo,
             tetris.m_clear_info.total_pc, tetris.m_clear_info.total_cb_att, tetris.m_clear_info.total_b2b,
             tetris.m_clear_info.t[0], tetris.m_clear_info.t[1], tetris.m_clear_info.t[2], tetris.m_clear_info.t[3],
             tetris.m_clear_info.normal[1], tetris.m_clear_info.normal[2], tetris.m_clear_info.normal[3],tetris.m_clear_info.normal[4]
-#else
-            "Win %4d\nPPS %.2f\nAPM %4.1f\nAtt %4d\nSent %3d\nRecv %3d\nAPL %.2f\nAPP %.3f\nCombo %2d\nClear %2d\nCbA %4d\nB2B %4d\nT0 %5d\nT1 %5d\nT2 %5d\nT3 %5d\n1 %6d\n2 %6d\n3 %6d\n4 %6d\n",
-            tetris.n_win, pps, apm, tetris.total_atts, tetris.total_sent, tetris.total_accept_atts, apl, app, tetris.m_max_combo,
-            tetris.m_clear_info.total_pc, tetris.m_clear_info.total_cb_att, tetris.m_clear_info.total_b2b,
-            tetris.m_clear_info.t[0], tetris.m_clear_info.t[1], tetris.m_clear_info.t[2], tetris.m_clear_info.t[3],
-            tetris.m_clear_info.normal[1], tetris.m_clear_info.normal[2], tetris.m_clear_info.normal[3],tetris.m_clear_info.normal[4]
-#endif
             );
     }
     if ( tetris.m_clear_info.attack > 0 ) {
@@ -448,10 +439,6 @@ void onGameStart(TetrisGame& tetris, AI::Random& rnd, int index) {
         }
         tetris.addRow((((1 << tetris.m_pool.m_w) - 1) & ~(1<<(hole_index + AI::gem_beg_x))) & tetris.m_pool.m_w_mask);
     }
-#if !defined( XP_RELEASE ) //|| P1_AI
-    if ( index == 0 ) tetris.addRow(15);
-    else tetris.addRow(15 << 6);
-#endif
     if (0)
     {
         char n[] = "ITSOJLITZJISOTZ";
@@ -680,11 +667,7 @@ void mainscene() {
     int game_pause = 0;
 
     CProfile config;
-#if !defined( XP_RELEASE ) || P1_AI || !PUBLIC_VERSION
-    config.SetFile( "tetris_ai.ini" );
-#else
     config.SetFile( "misamino.ini" );
-#endif
     if ( 0 )
     {
         config.SetSection( "AI" );
@@ -733,30 +716,10 @@ void mainscene() {
 		'R'
     };
     loadKeySetting( player_keys );
-#ifndef XP_RELEASE
-    EvE eve;
-    //eve.loadResult();
-    if ( ! eve.loadResult() )
-    {
-        //std::deque<AI::AI_Param> _p;
-        //_p.push_back(tetris[0].m_ai_param);
-        //eve.init( _p );
-        eve.ai.push_back(tetris[0].m_ai_param);
-    }
-#endif
-#ifdef XP_RELEASE
-    int ai_eve = 0;
     int ai_search_height_deep = DISPLAY_NEXT_NUM > 6 ? 6 : DISPLAY_NEXT_NUM;
     int player_stratagy_mode = !AI_SHOW;
     int mainloop_times = 1;
     int normal_delay = 1;
-#else
-    int ai_eve = 1;
-    int ai_search_height_deep = AI_TRAINING_DEEP;
-    int player_stratagy_mode = 1;
-    int mainloop_times = ( AI_TRAINING_DEEP == 0 ? 1000 : (AI_TRAINING_SLOW ? 2 : 50) );
-    int normal_delay = 1;
-#endif
 #if AI_SHOW == 0
     int player_accept_attack = 1;
     int player_begin_attack = 0; //17;
@@ -765,8 +728,8 @@ void mainscene() {
     int player_begin_attack = 0; //17;
 #endif
     //int ai_search_normal_deep = 0;
-    int ai_mov_time = ( ai_eve | (1&&ai[0].style) ?
-        (AI_TRAINING_SLOW ? 12 : 0)
+    int ai_mov_time = ( ai[0].style ?
+        12
         : (
         (AI_SHOW ) ? ( GAMEMODE_4W ? 2: 16 ) : ( PLAYER_WAIT ? 2 : 10 ) )
         );
@@ -953,7 +916,7 @@ void mainscene() {
         if ( tetris[i].pAIName ) {
             tetris[i].m_name = tetris[i].pAIName(ai[i].level);
         }
-        if ( ! ai_4w || ai_eve || ai[i].level < 6 ) {
+        if ( ! ai_4w || ai[i].level < 6 ) {
             tetris[i].m_ai_param.strategy_4w = 0;
         }
         if ( tetris[i].m_ai_param.strategy_4w > 0 ) {
@@ -990,10 +953,8 @@ void mainscene() {
             AI::setAIsettings(i, "4w", 0);
         }
     }
-#ifdef XP_RELEASE
     tetris[0].m_state = AI::Tetris::STATE_OVER;
     tetris[1].m_state = AI::Tetris::STATE_OVER;
-#endif
     if ( player.sound_p1 && player.sound_p2 ) {
         tetris[0].m_lr = 1;
         tetris[1].m_lr = 2;
@@ -1085,18 +1046,6 @@ void mainscene() {
     for ( ; is_run() ; normal_delay ? delay_fps(60) : delay_ms(0) ) {
         for ( int jf = 0; jf < mainloop_times; ++jf) {
 
-#ifndef XP_RELEASE
-            if ( AI_TRAINING_SLOW == 0 ) {
-                for ( int i = 0; i < players_num; ++i ) {
-                    while ( tetris[i].ai_movs_flag != -1 ) {
-                        ::Sleep(1);
-                    }
-                }
-            }
-            if ( ai_eve ) {
-                eve.game(tetris[0], tetris[1], rnd);
-            }
-#endif
             if ( tetris[0].alive() && tetris[1].alive() ) {
                 lastGameState = 0;
             } else {
@@ -1118,7 +1067,7 @@ void mainscene() {
 				t2 = tetris[1];
 				sw = false;
 			}
-            if ( ! ai_eve ) {
+            {
                 while ( kbmsg() ) {
                     key_msg k = getkey();
                     if ( k.msg == key_msg_down && k.key == key_pause ) {
@@ -1234,11 +1183,6 @@ void mainscene() {
                         game_info += str;
                         game_info_time = 240;
                     }
-                    if ( PUBLIC_VERSION == 0 ) {
-                        if ( k.key == key_f9 ) {
-                            tetris[1].accept_atts.push_back(1);
-                        }
-                    }
                 }
                 if ( game_pause ) continue;
                 for (int i = 0; i < 3; ++i) {
@@ -1275,15 +1219,6 @@ void mainscene() {
 
                     int att = tetris[i].m_attack;
                     int clearLines = tetris[i].m_clearLines;
-#ifndef XP_RELEASE
-                    if ( tetris[i].total_atts >= 200 && tetris[i].total_atts - tetris[1 - i].total_atts > 20 ) {
-                        tetris[1 - i].m_state = AI::Tetris::STATE_OVER;
-                    } else if ( tetris[i].total_atts >= 400 ) {
-                        if ( (double)tetris[i].total_atts / tetris[i].total_clears > (double)tetris[1 - i].total_atts / tetris[1 - i].total_clears ) {
-                            tetris[1 - i].m_state = AI::Tetris::STATE_OVER;
-                        }
-                    }
-#endif
                     tetris[i].total_clears += clearLines;
                     tetris[i].m_clearLines = 0;
                     tetris[i].m_attack = 0;
@@ -1335,7 +1270,7 @@ void mainscene() {
                     }
                 }
                 if ( tetris[i].env_change && tetris[i].ai_movs_flag == -1) { // AI º∆À„
-                    if ( (ai_eve || ai[i].style) && tetris[i].alive() && ( tetris[i].env_change != 2 || ( tetris[i].ai_plan_started == 0 && tetris[i].ai_plan_replans < 2 ) ) ) {
+                    if ( ai[i].style && tetris[i].alive() && ( tetris[i].env_change != 2 || ( tetris[i].ai_plan_started == 0 && tetris[i].ai_plan_replans < 2 ) ) ) {
                     //if ( i != 0 && tetris[i].alive() ) {
                         std::vector<AI::Gem> next;
                         for ( int j = 0; j < 32; ++j)
@@ -1366,9 +1301,6 @@ void mainscene() {
                                 tetris[i].m_cur,
                                 tetris[i].m_cur_x, tetris[i].m_cur_y, next, canhold, upcomeAtt,
                                 deep, tetris[i].ai_last_deep, level, i);
-#if 1 && !defined(XP_RELEASE)
-                            while ( tetris[i].ai_movs_flag != -1 ) ::Sleep(1);
-#endif
                         }
                         ai_time = (double)::GetTickCount() / 1000 - beg;
                         if ( rule.turnbase && ai[0].style == 0 ) {
@@ -1455,7 +1387,7 @@ void mainscene() {
                     } while ( tetris[i].ai_movs_flag == -1 && ( tetris[i].env_change == 0 || tetris[i].ai_plan_started || tetris[i].ai_plan_replans >= 2 ) && tetris[i].ai_delay == 0 && !tetris[i].ai_movs.movs.empty() );
                 }
             }
-            if ( ! ai_eve ) break;
+            break;
         }
         cleardevice();
         for (std::vector<TetrisGame>::iterator it = tetris.begin();
@@ -1464,34 +1396,10 @@ void mainscene() {
                 tetris_draw(*it, showAttackLine, showGrid);
         }
         //if(0)
-        if ( ! PUBLIC_VERSION )
-        {
-            for ( int i = 0; i < players_num; ++i ) {
-                setcolor(EGERGB(0x0, 0xa0, 0x0));
-                //xyprintf(0,0, "%.3f", ai_time * 1000);
-                xyprintf((int)tetris[i].m_base.x, (int)(tetris[i].m_base.y - tetris[i].m_size.y), "d = %d", tetris[i].ai_last_deep);
-            }
-        }
         if ( game_info_time > 0 ) {
             --game_info_time;
             xyprintf( 0, getheight() - textheight("I"), "%s", game_info.c_str());
         }
-#ifndef XP_RELEASE
-        if ( ai_eve ) {
-            double d = 0;
-            if ( eve.m_p2 > 0 ) {
-                d = eve.m_p2_score / (double)eve.m_p2;
-                d *= d;
-                d = eve.m_p2_sqr_score / (double)eve.m_p2 - d;
-                d = eve.m_p2_score / (double)eve.m_p2 - sqrt(d);
-            }
-            if ( (eve.m_p1 + eve.m_p2) % 2 == 0)
-                xyprintf(0, 0, "(%d) %d : %d", eve.ai.size(), eve.m_p2, eve.m_p1);
-            else
-                xyprintf(0, 0, "(%d) %d : %d", eve.ai.size(), eve.m_p1, eve.m_p2);
-            //xyprintf(0, 0, "%.2f %d %d", d * eve.round, eve.m_p2, eve.m_p2_score + tetris[1].total_atts);
-        }
-#endif
         {
             char buff[16];
             sprintf(buff, "%.2ffps", getfps());
@@ -1521,18 +1429,10 @@ void CenterWindow(HWND hWnd)
 }
 
 int main () {
-#if PUBLIC_VERSION == 0
-    setinitmode(INIT_ANIMATION & ~INIT_WITHLOGO);
-#else
     setinitmode(INIT_ANIMATION);
-#endif
     initgraph(800, 500);
     //CenterWindow( getHWnd() );
-#if PUBLIC_VERSION == 0
-    setcaption("Tetris AI Demo");
-#else
     setcaption("MisaMino V1.4.5 ---- by Misakamm ( misakamm.com )");
-#endif
     mainscene();
     return 0;
 }

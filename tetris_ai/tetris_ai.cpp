@@ -370,7 +370,6 @@ namespace AI {
             pool_hole_score = hole_score;
         }
         score += pool_hole_score;
-#ifdef XP_RELEASE
         // 全消
         if ( 0 ) //&& pool.getPCAttack() > 8 )
         {
@@ -434,7 +433,6 @@ namespace AI {
                 }
             }
         }
-#endif
         // 高度差
         {
             //int n_maxy_index = maxy_index;
@@ -545,7 +543,6 @@ namespace AI {
                     }
                 }
                 clearScore += cs;
-#ifdef XP_RELEASE
                 if (1)
                 if ( clears > 0 && upcomeAtt >= 4 && ai_param.upcomeAtt > 0 ) {
                     int cur_s = 0;
@@ -559,7 +556,6 @@ namespace AI {
                     //    }
                     //}
                 }
-#endif
                 score += s;
             }
             //if ( clears ) {
@@ -1151,7 +1147,6 @@ namespace AI {
         if ( pool.combo > 0 && (pool.row[10] || pool.combo > 1) ) ai_param.strategy_4w = 0;
         if ( ai_param.hole < 0 ) ai_param.hole = 0;
         ai_param.hole += ai_param.open_hole;
-#if AI_WEAK_VERSION || defined(XP_RELEASE)
         int ai_level_map[] = {
             4000,  //LV0 search all
             4000,  //LV1 search all
@@ -1170,9 +1165,6 @@ namespace AI {
         if ( level <= 0 ) maxDeep = 0;
         else if ( level <= 6 ) maxDeep = std::min(level, 6); // TODO: max deep
         //else maxDeep = level;
-#else
-        int max_search_nodes = 4000;
-#endif
         int next_add = 0;
         if ( pool.m_hold == 0 ) {
             next_add = 1;
@@ -1342,7 +1334,6 @@ namespace AI {
         searchDeep = 1;
         for ( int depth = 0; search_nodes < max_search_nodes && depth < maxDeep; searchDeep = ++depth ) { //d < maxDeep
             std::swap(pq_last, pq);
-#if defined(XP_RELEASE)
             int (*sw_map)[8] = sw_map1;
             if ( ai_settings[player].hash ) {
                 sw_map = sw_map2;
@@ -1354,15 +1345,6 @@ namespace AI {
             int search_wide = 1000;
             if ( depth > 7 ) search_wide = sw_map[level][7];
             else search_wide = sw_map[level][depth];
-#else
-            int sw_map[16][8] = {
-                {15,  30,  20,  15,  10,  10,  10,  10},
-            };
-            int search_wide = 0;
-            if ( depth > 7 ) search_wide = sw_map[0][7];
-            else search_wide = sw_map[0][depth];
-            int search_base_width = sw_map[0][0];;
-#endif
             //int seach_select_best = (level <= 3 ? 1000 : (std::min(search_wide, 30) ) );
             int seach_select_best = std::min(search_wide - search_wide / 4, search_base_width);
             if ( level <= 3 ) {
@@ -1591,7 +1573,6 @@ namespace AI {
             std::swap(pq_last, pq);
             pq->clear();
             int depth = searchDeep > 0 ? searchDeep - 1 : 0;
-#if defined(XP_RELEASE)
             int (*sw_map)[8] = sw_map1;
             if ( ai_settings[player].hash )
                 sw_map = sw_map2;
@@ -1599,10 +1580,6 @@ namespace AI {
             int search_wide = 1000;
             if ( depth > 7 ) search_wide = sw_map[level][7];
             else search_wide = sw_map[level][depth];
-#else
-            int search_wide = (depth < 2 ? 20 : 20);
-            int search_base_width = 20;
-#endif
             //int seach_select_best = (level <= 3 ? 1000 : (std::min(search_wide, 30) ) );
             int seach_select_best = std::min(search_wide - search_wide / 4, search_base_width);
             if ( level <= 3 ) {

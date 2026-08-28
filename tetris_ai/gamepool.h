@@ -3,11 +3,7 @@
 
 #include <string.h>
 #include "tetris_gem.h"
-#ifdef XP_RELEASE
 #define AI_POOL_MAX_H 50
-#else
-#define AI_POOL_MAX_H 32
-#endif
 
 namespace AI {
     struct GameField;
@@ -20,11 +16,7 @@ namespace AI {
     typedef __int64 uint64;
     void InitHashTable();
     uint64 hash(const GameField & pool);
-#ifdef XP_RELEASE
     const int gem_add_y = 20;
-#else
-    const int gem_add_y = 6;
-#endif
     const int gem_beg_x = 3;
     const int gem_beg_y = 1;
 
@@ -57,11 +49,7 @@ namespace AI {
             combo = 0;
             b2b = 0;
             m_hold = 0;
-#ifdef XP_RELEASE
             m_pc_att = 6;
-#else
-            m_pc_att = 10;
-#endif
             m_w_mask = ( 1 << w ) - 1;
             for (int i = 0; i < AI_POOL_MAX_H; ++i) {
                 m_row[i] = 0;
