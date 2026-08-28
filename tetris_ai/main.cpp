@@ -169,7 +169,7 @@ void tetris_draw(const TetrisGame& tetris, bool showAttackLine, bool showGrid) {
                 int by = int(base_y + tetris.m_size.y * y);
                 if ( y == 2 ) putimage(bx, by + (int)tetris.m_size.y - 5, (int)tetris.m_size.x, 5, gem[tetris.getPoolCell(x, y)], 0, (int)tetris.m_size.y - 5);
                 else if ( y > 2 ) putimage(bx, by, gem[tetris.getPoolCell(x, y)]);
-                min_y[x] = min( min_y[x], y );
+                min_y[x] = std::min( min_y[x], y );
             }
         }
     }
@@ -749,25 +749,26 @@ void mainscene() {
 
     {
         typedef int (*AIDllVersion_t)();
-        AIDllVersion_t pAIDllVersion = NULL;
-        char path[MAX_PATH];
-        path[0] = 0;
-        if ( ::GetCurrentDirectoryA(MAX_PATH, path) == 0 ) path[0] = 0;
+        std::error_code ec;
+        std::filesystem::path savedir = std::filesystem::current_path(ec);
         for ( int i = 0; i < players_num; ++i ) {
             if ( ai[i].style == -1 )
             {
-                ::SetCurrentDirectoryA( (getpath(std::string(path) + "/" + ai[i].plugin)).c_str() );
-                HMODULE hModule = ::LoadLibraryA(ai[i].plugin.c_str());
+                std::filesystem::path plug = std::filesystem::absolute(ai[i].plugin, ec);
+                if ( ec ) continue;
+                std::filesystem::current_path(plug.parent_path(), ec);
+                if ( ec ) continue;
+                plat::DylibHandle hModule = plat::dylib_open(plug.filename().string());
                 if ( hModule ) {
-                    pAIDllVersion = (AIDllVersion_t)GetProcAddress(hModule, "AIDllVersion");
+                    AIDllVersion_t pAIDllVersion = (AIDllVersion_t)plat::dylib_sym(hModule, "AIDllVersion");
                     if ( pAIDllVersion && pAIDllVersion() == AI_DLL_VERSION ) {
-                        tetris[i].pAIName = (AI::AIName_t)GetProcAddress(hModule, "AIName");
-                        tetris[i].pTetrisAI = (AI::TetrisAI_t)GetProcAddress(hModule, "TetrisAI");
+                        tetris[i].pAIName = (AI::AIName_t)plat::dylib_sym(hModule, "AIName");
+                        tetris[i].pTetrisAI = (AI::TetrisAI_t)plat::dylib_sym(hModule, "TetrisAI");
                     }
                 }
+                std::filesystem::current_path(savedir, ec);
             }
         }
-        ::SetCurrentDirectoryA(path);
     }
 
     if ( 1 )
@@ -967,7 +968,7 @@ void mainscene() {
             tetris[i].m_base = AI::point(i * 400, 30);
             //tetris[i].reset( seed ^ ((!rule.samesequence) * i * 255), pass );
             //if ( ai_eve )
-            //tetris[i].reset( (unsigned)time(0) + ::GetTickCount() * i );
+            //tetris[i].reset( (unsigned)time(0) + (unsigned)(plat::now_seconds() * 1000) * i );
             /*
             int m[20][12] = {
             {0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -1156,7 +1157,7 @@ void mainscene() {
                             int seed = (unsigned)time(0), pass = rnd.randint(1024);
                             for ( int i = 0; i < players_num; ++i ) {
                                 tetris[i].reset( seed ^ ((!rule.samesequence) * i * 255), pass );
-                                //tetris[i].reset( (unsigned)time(0) + ::GetTickCount() * i );
+                                //tetris[i].reset( (unsigned)time(0) + (unsigned)(plat::now_seconds() * 1000) * i );
                                 onGameStart( tetris[i], rnd, i );
                                 tetris[i].acceptAttack(player_begin_attack);
                             }
@@ -1178,7 +1179,7 @@ void mainscene() {
                         char str[64];
                         if ( k.key == key_f5 ) GameSound::ins().setVolumeAdd(-0.05f) ;
                         if ( k.key == key_f6 ) GameSound::ins().setVolumeAdd(+0.05f);
-                        sprintf_s( str, 64, "%d %%", int(GameSound::ins().getVolume() * 100 + 0.5) );
+                        snprintf( str, 64, "%d %%", int(GameSound::ins().getVolume() * 100 + 0.5) );
                         game_info = "set volume = ";
                         game_info += str;
                         game_info_time = 240;
@@ -1227,7 +1228,7 @@ void mainscene() {
                         tetris[i].total_atts += att;
                         if ( rule.GarbageCancel ) {
                             while ( att > 0 && ! tetris[i].accept_atts.empty() ) {
-                                int m = min( att, tetris[i].accept_atts[0]);
+                                int m = std::min( att, tetris[i].accept_atts[0]);
                                 att -= m;
                                 tetris[i].accept_atts[0] -= m;
                                 if ( tetris[i].accept_atts[0] <= 0 ) {
@@ -1275,7 +1276,7 @@ void mainscene() {
                         std::vector<AI::Gem> next;
                         for ( int j = 0; j < 32; ++j)
                             next.push_back(tetris[i].m_next[j]);
-                        double beg = (double)::GetTickCount() / 1000;
+                        double beg = plat::now_seconds();
                         int deep = ai_search_height_deep;
                         int upcomeAtt = std::accumulate(tetris[i].accept_atts.begin(), tetris[i].accept_atts.end(), 0);
                         if ( tetris[i].env_change == 2 && tetris[i].ai_plan_started == 0 ) ++tetris[i].ai_plan_replans;
@@ -1302,7 +1303,7 @@ void mainscene() {
                                 tetris[i].m_cur_x, tetris[i].m_cur_y, next, canhold, upcomeAtt,
                                 deep, tetris[i].ai_last_deep, level, i);
                         }
-                        ai_time = (double)::GetTickCount() / 1000 - beg;
+                        ai_time = plat::now_seconds() - beg;
                         if ( rule.turnbase && ai[0].style == 0 ) {
                             if ( rule.turn == 1 && tetris[0].n_pieces * ai[1].PieceMul - tetris[i].n_pieces * ai[0].PieceMul > 1 ) {
                                 ai_mov_time_base = ai_mov_time / 4;
@@ -1314,7 +1315,7 @@ void mainscene() {
                             tetris[i].ai_delay = ai_first_delay;
                         }
                         if ( tetris[i].env_change == 2 ) { // 被攻击就按已等待时间减少思索等待
-                            tetris[i].ai_delay = max(0, tetris[i].ai_delay - tetris[i].m_piecedelay);
+                            tetris[i].ai_delay = std::max(0, tetris[i].ai_delay - tetris[i].m_piecedelay);
                         }
                     }
                     tetris[i].env_change = 0;
@@ -1409,29 +1410,9 @@ void mainscene() {
     saveKeySetting( player_keys );
 }
 
-void CenterWindow(HWND hWnd)
-{
-    HWND hParentOrOwner;
-    RECT rc, rc2;
-    int  x,y;
-    if ( (hParentOrOwner = GetParent(hWnd)) == NULL )
-    {
-        SystemParametersInfo(SPI_GETWORKAREA,0,&rc,0);
-    }
-    else
-    {
-        GetClientRect(hParentOrOwner, &rc);
-    }
-    GetWindowRect(hWnd, &rc2);
-    x = ((rc.right-rc.left) - (rc2.right-rc2.left)) / 2 +rc.left;
-    y = ((rc.bottom-rc.top) - (rc2.bottom-rc2.top)) / 2 +rc.top;
-    SetWindowPos(hWnd,HWND_TOP,x, y,0, 0,SWP_NOSIZE);
-}
-
 int main () {
     setinitmode(INIT_ANIMATION);
     initgraph(800, 500);
-    //CenterWindow( getHWnd() );
     setcaption("MisaMino V1.4.5 ---- by Misakamm ( misakamm.com )");
     mainscene();
     return 0;

@@ -1,7 +1,10 @@
 #pragma once
 #define _ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH
 
+#include <cstdint>
+
 namespace AI {
+    typedef std::uint32_t RowBits;
     enum GemType {
         GEMTYPE_NULL,
         GEMTYPE_I,
@@ -13,7 +16,7 @@ namespace AI {
         GEMTYPE_O,
     };
     struct Gem {
-        unsigned long bitmap[4];
+        RowBits bitmap[4];
         int num, spin, mod;
         int geth() const { return 4; }
     };

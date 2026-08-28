@@ -5,6 +5,7 @@
 #include <string>
 #include <algorithm>
 #include <atomic>
+#include "platform.h"
 
 #include "tetris.h"
 #include "tetris_ai.h"
@@ -166,7 +167,7 @@ public:
         m_ai_param = param;
     }
     void reset ( unsigned seed, unsigned pass = 0 ) {
-        while ( ai_movs_flag != -1 ) ::Sleep(1);
+        while ( ai_movs_flag != -1 ) plat::sleep_ms(1);
         last_max_combo = m_max_combo;
         AI::Tetris::reset(seed, 10, 22);
         m_randatt.seed( seed );

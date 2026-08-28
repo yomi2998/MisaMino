@@ -56,7 +56,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>      <LanguageStandard>stdcpp23</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -72,7 +72,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>      <LanguageStandard>stdcpp23</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -87,13 +87,15 @@
     <ClCompile Include="gamepool.cpp" />
     <ClCompile Include="genmove.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Profile.cpp" />
+    <ClCompile Include="profile.cpp" />
     <ClCompile Include="tetris_ai.cpp" />
     <ClCompile Include="tetris_gem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamepool.h" />
-    <ClInclude Include="Profile.h" />
+    <ClInclude Include="profile.h">
+    </ClInclude>
+    <ClInclude Include="platform.h" />
     <ClInclude Include="random.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sound.h" />

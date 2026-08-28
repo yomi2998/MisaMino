@@ -1,6 +1,8 @@
 #pragma once
-#include "windows.h"
 #include <string>
+#include <cstdio>
+#include <cstdlib>
+#include <vector>
 
 class CProfile
 {
@@ -13,20 +15,13 @@ public:
     void SetSection( std::string section ) {
         m_section = section;
     }
-    int WriteString( std::string key, std::string value ) {
-        return WritePrivateProfileStringA( m_section.c_str(), key.c_str(), value.c_str(), (m_path + m_filename).c_str() );
-    }
+    int WriteString( std::string key, std::string value );
     int WriteInteger( std::string key, int value ) {
         char buff[1024];
-        sprintf( buff, "%d", value );
+        snprintf( buff, sizeof(buff), "%d", value );
         return WriteString( key, buff );
     }
-    int ReadString( std::string key, std::string& value ) {
-        char buff[1024];
-        int ret =  GetPrivateProfileStringA( m_section.c_str(), key.c_str(), "", buff, 1024, (m_path + m_filename).c_str() );
-        if ( ret > 0 ) value = buff;
-        return ret;
-    }
+    int ReadString( std::string key, std::string& value );
     bool IsInteger( std::string key ) {
         ReadInteger( key );
         return m_errcode == 0;
@@ -45,9 +40,20 @@ public:
         return 0;
     }
 private:
+    struct Entry {
+        std::string key;
+        std::string value;
+    };
+    struct Section {
+        std::string name;
+        std::vector<Entry> entries;
+    };
+    std::vector<Section> load() const;
+    bool save( const std::vector<Section>& sections ) const;
+    static std::string lower( const std::string& s );
+    static std::string trim( const std::string& s );
     int m_errcode;
     std::string m_path;
     std::string m_filename;
     std::string m_section;
 };
-

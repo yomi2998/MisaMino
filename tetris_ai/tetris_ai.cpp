@@ -1,6 +1,8 @@
 #include "tetris_ai.h"
-#include <process.h>
 #include <deque>
+#include <thread>
+#include <system_error>
+#include "platform.h"
 #include <map>
 #include <set>
 
@@ -1814,12 +1816,13 @@ namespace AI {
         *p->searchDeep = searchDeep;
         *p->flag = -1;
         delete p;
-        _endthread();
     }
     int RunAI(Moving& ret_mov, std::atomic<int>& flag, const AI_Param& ai_param, const GameField& pool, int hold, Gem cur, int x, int y, const std::vector<Gem>& next, bool canhold, int upcomeAtt, int maxDeep, int & searchDeep, int level, int player) {
         flag = 0;
         AI_THREAD_PARAM* pparam = new AI_THREAD_PARAM(NULL, ret_mov, flag, ai_param, pool, hold, cur, x, y, next, canhold, upcomeAtt, maxDeep, searchDeep, level, player);
-        if ( _beginthread(AI_Thread, 0, pparam ) == (unsigned long)-1 ) {
+        try {
+            std::thread(AI_Thread, pparam).detach();
+        } catch (const std::system_error&) {
             delete pparam;
             ret_mov.movs.clear();
             ret_mov.movs.push_back( Moving::MOV_NULL );
@@ -1882,12 +1885,13 @@ namespace AI {
         }
         *p->flag = -1;
         delete p;
-        _endthread();
     }
     int RunAIDll(TetrisAI_t func, Moving& ret_mov, std::atomic<int>& flag, const AI_Param& ai_param, const GameField& pool, int hold, Gem cur, int x, int y, const std::vector<Gem>& next, bool canhold, int upcomeAtt, int maxDeep, int & searchDeep, int level, int player) {
         flag = 0;
         AI_THREAD_PARAM* pparam = new AI_THREAD_PARAM(func, ret_mov, flag, ai_param, pool, hold, cur, x, y, next, canhold, upcomeAtt, maxDeep, searchDeep, level, player);
-        if ( _beginthread(AI_Thread_Dll, 0, pparam ) == (unsigned long)-1 ) {
+        try {
+            std::thread(AI_Thread_Dll, pparam).detach();
+        } catch (const std::system_error&) {
             delete pparam;
             ret_mov.movs.clear();
             ret_mov.movs.push_back( Moving::MOV_NULL );

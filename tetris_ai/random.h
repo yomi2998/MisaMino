@@ -32,7 +32,8 @@ namespace AI {
 const int N = 624;
 const int M = 397;
 
-typedef unsigned __int32 uint32;
+#include <cstdint>
+typedef std::uint32_t uint32;
 
 class mtrandom {
 public:
@@ -95,7 +96,7 @@ public:
 		return y;
 	}
 
-	double real()    {    return (double)rand() / ((double)(unsigned long)(-1L) + 1);    }
+	double real()    {    return (double)rand() / 4294967296.0;    }
 
 	// generates a random number on [0,1) with 53-bit resolution
 	double res53() {

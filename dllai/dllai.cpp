@@ -7,9 +7,12 @@
 #include <map>
 #include <string>
 #include <cstring>
-#include "windows.h"
 
+#ifdef _WIN32
 #define DLLEXPORT extern "C" __declspec(dllexport)
+#else
+#define DLLEXPORT extern "C" __attribute__((visibility("default")))
+#endif
 
 char g_result[8][1024];
 AI::MovingSimple last_best[8];

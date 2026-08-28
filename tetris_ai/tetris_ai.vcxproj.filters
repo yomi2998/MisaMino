@@ -30,7 +30,7 @@
     <ClCompile Include="tetris_ai.cpp">
       <Filter>ai</Filter>
     </ClCompile>
-    <ClCompile Include="Profile.cpp">
+    <ClCompile Include="profile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tetris_gem.cpp">
@@ -65,7 +65,10 @@
     <ClInclude Include="tetris_setting.h">
       <Filter>tetris</Filter>
     </ClInclude>
-    <ClInclude Include="Profile.h">
+    <ClInclude Include="platform.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="profile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="sound.h">

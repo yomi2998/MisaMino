@@ -18,10 +18,10 @@ namespace AI {
         signed char m_w, m_h;
         signed short combo;
         signed short b2b;
-        unsigned long m_w_mask;
-        unsigned long m_row[AI_POOL_MAX_H];
+        RowBits m_w_mask;
+        RowBits m_row[AI_POOL_MAX_H];
         int m_hold;
-        unsigned long *row;
+        RowBits *row;
         GameField () {
             row = &m_row[gem_add_y];
         }
@@ -41,12 +41,12 @@ namespace AI {
             combo = 0;
             b2b = 0;
             m_hold = 0;
-            m_w_mask = ( 1 << w ) - 1;
+            m_w_mask = ( RowBits(1) << w ) - 1;
             for (int i = 0; i < AI_POOL_MAX_H; ++i) {
                 m_row[i] = 0;
             }
             for (int i = gem_add_y + m_h + 1; i < AI_POOL_MAX_H; ++i) {
-                m_row[i] = (unsigned)-1;
+                m_row[i] = ~RowBits(0);
             }
         }
         GameField& operator = (const GameField& field) {

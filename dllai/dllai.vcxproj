@@ -84,7 +84,6 @@
   <ItemGroup>
     <ClInclude Include="ai.h" />
     <ClInclude Include="gamefield.h" />
-    <ClInclude Include="targetver.h" />
     <ClInclude Include="tetris_gem.h" />
   </ItemGroup>
   <ItemGroup>

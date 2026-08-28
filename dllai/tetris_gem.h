@@ -1,10 +1,7 @@
 #pragma once
 #define _ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH
 
-#if _MSC_VER <= 1200
-#define for if (0); else for
-#pragma warning(disable : 4786)
-#endif
+#include <cstdint>
 
 namespace AI {
     enum GemType {
@@ -17,8 +14,10 @@ namespace AI {
         GEMTYPE_S,
         GEMTYPE_O,
     };
+    typedef std::uint32_t RowBits;
+
     struct Gem {
-        unsigned long bitmap[4];
+        RowBits bitmap[4];
         int num, spin, mod;
         int geth() const { return 4; }
     };

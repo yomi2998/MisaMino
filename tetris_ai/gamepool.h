@@ -2,6 +2,7 @@
 #define _ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH
 
 #include <string.h>
+#include <cstdint>
 #include "tetris_gem.h"
 #define AI_POOL_MAX_H 50
 
@@ -13,7 +14,7 @@ namespace AI {
     bool isEnableAllSpin();
     void setSoftdrop( bool softdrop );
     bool softdropEnable();
-    typedef __int64 uint64;
+    typedef std::uint64_t uint64;
     void InitHashTable();
     uint64 hash(const GameField & pool);
     const int gem_add_y = 20;
@@ -24,12 +25,12 @@ namespace AI {
         signed char m_w, m_h;
         signed short combo;
         signed short b2b;
-        unsigned long m_w_mask;
-        unsigned long m_row[AI_POOL_MAX_H];
+        RowBits m_w_mask;
+        RowBits m_row[AI_POOL_MAX_H];
         int m_hold;
         int m_pc_att;
         uint64 hashval;
-        unsigned long *row;
+        RowBits *row;
         GameField () {
             row = &m_row[gem_add_y];
         }
@@ -50,12 +51,12 @@ namespace AI {
             b2b = 0;
             m_hold = 0;
             m_pc_att = 6;
-            m_w_mask = ( 1 << w ) - 1;
+            m_w_mask = ( RowBits(1) << w ) - 1;
             for (int i = 0; i < AI_POOL_MAX_H; ++i) {
                 m_row[i] = 0;
             }
             for (int i = gem_add_y + m_h + 1; i < AI_POOL_MAX_H; ++i) {
-                m_row[i] = (unsigned)-1;
+                m_row[i] = ~RowBits(0);
             }
         }
         GameField& operator = (const GameField& field) {
