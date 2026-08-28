@@ -135,7 +135,7 @@ char* TetrisAI(int overfield[], int field[], int field_w, int field_h, int b2b, 
             hold_num = gemNext[0].num;
         }
         std::vector<AI::Moving> movs;
-        AI::Gem cur;
+        AI::Gem cur = AI::getGem(0, 0);
         if ( best.hold && hold_num >= 1 && hold_num <= 7 ) {
             cur = AI::getGem(hold_num, 0);
             FindPathMoving(gamefield, movs, cur, AI::gem_beg_x, AI::gem_beg_y, true);

@@ -101,6 +101,13 @@ namespace AI {
         att = field.getAttack( clear, wallkick_spin );
         return clear;
     }
+    void ApplyUpcomeGarbage(GameField& field, int rows, int seed) {
+        int w = field.width();
+        for ( int i = 0; i < rows; ++i ) {
+            int hole = ( seed * 7 + i * 3 + 1 ) % w;
+            field.addRow( (int)( field.m_w_mask & ~( 1 << hole ) ) );
+        }
+    }
     MovingSimple AISearch(const GameField& field, Gem cur, bool curCanHold, int x, int y, const std::vector<Gem>& next
         , bool canhold, int upcomeAtt, int level, int player
         , int maxdepth, int* pscore, int lastatt, int lastclear, int depth) {
@@ -121,8 +128,13 @@ namespace AI {
             clear = pasteClearAttack(newfield, cur.num, movs[i].x, movs[i].y, movs[i].spin, movs[i].wallkick_spin, att);
             int score = 0;
             if ( maxdepth > 0 && next.size() > 0) {
+                int upcome = upcomeAtt;
+                if ( upcome > 0 ) {
+                    upcome -= att;
+                    if ( upcome > 0 ) ApplyUpcomeGarbage(newfield, upcome, player + depth);
+                }
                 std::vector<Gem> newnext( next.begin() + 1, next.end() );
-                AISearch(newfield, next[0], canhold, gem_beg_x, gem_beg_y, newnext, canhold, upcomeAtt, level, player, maxdepth - 1, &score, lastatt + att, lastclear + clear, depth + 1);
+                AISearch(newfield, next[0], canhold, gem_beg_x, gem_beg_y, newnext, canhold, 0, level, player, maxdepth - 1, &score, lastatt + att, lastclear + clear, depth + 1);
             } else {
                 score += Evaluate(newfield, lastatt + att, lastclear + clear, depth, player);
             }
@@ -145,12 +157,17 @@ namespace AI {
                     int score = 0;
                     newfield.m_hold = cur.num;
                     if ( maxdepth > 0 && (field.m_hold != 0 && next.size() > 0 || next.size() > 1) ) {
+                        int upcome = upcomeAtt;
+                        if ( upcome > 0 ) {
+                            upcome -= att;
+                            if ( upcome > 0 ) ApplyUpcomeGarbage(newfield, upcome, player + depth);
+                        }
                         if ( field.m_hold == 0 ) {
                             std::vector<Gem> newnext( next.begin() + 2, next.end() );
-                            AISearch(newfield, next[1], canhold, gem_beg_x, gem_beg_y, newnext, canhold, upcomeAtt, level, player, maxdepth - 1, &score, lastatt + att, lastclear + clear, depth + 1);
+                            AISearch(newfield, next[1], canhold, gem_beg_x, gem_beg_y, newnext, canhold, 0, level, player, maxdepth - 1, &score, lastatt + att, lastclear + clear, depth + 1);
                         } else {
                             std::vector<Gem> newnext( next.begin() + 1, next.end() );
-                            AISearch(newfield, next[0], canhold, gem_beg_x, gem_beg_y, newnext, canhold, upcomeAtt, level, player, maxdepth - 1, &score, lastatt + att, lastclear + clear, depth + 1);
+                            AISearch(newfield, next[0], canhold, gem_beg_x, gem_beg_y, newnext, canhold, 0, level, player, maxdepth - 1, &score, lastatt + att, lastclear + clear, depth + 1);
                         }
                     } else {
                         score += Evaluate(newfield, lastatt + att, lastclear + clear, depth, player);

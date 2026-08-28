@@ -1304,11 +1304,11 @@ void mainscene() {
                                 if ( rule.GarbageBuffer ) {
                                     tetris[j].accept_atts.push_back( att );
                                     tetris[i].total_sent += att;
-                                    if ( rule.turnbase ) tetris[j].env_change = 2;
+                                    tetris[j].env_change = 2;
                                 } else {
                                     if ( player_accept_attack )
                                         tetris[j].acceptAttack( att );
-                                    if ( rule.turnbase ) tetris[j].env_change = 2;
+                                    tetris[j].env_change = 2;
                                 }
                             }
                         }
@@ -1415,7 +1415,7 @@ void mainscene() {
                     do
                     {
                         if ( tetris[i].ai_delay > 0 ) ;
-                        else if ( tetris[i].ai_movs_flag == -1 && ! tetris[i].ai_movs.movs.empty() ){
+                        else if ( tetris[i].ai_movs_flag == -1 && tetris[i].env_change == 0 && ! tetris[i].ai_movs.movs.empty() ){
                             if ( rule.turnbase && ai[0].style == 0 ) {
                                 tetris[i].ai_delay = ai_mov_time_base;
                             } else {
@@ -1447,7 +1447,7 @@ void mainscene() {
                                 tetris[i].env_change = 1;
                             }
                         }
-                    } while ( tetris[i].ai_movs_flag == -1 && tetris[i].ai_delay == 0 && !tetris[i].ai_movs.movs.empty() );
+                    } while ( tetris[i].ai_movs_flag == -1 && tetris[i].env_change == 0 && tetris[i].ai_delay == 0 && !tetris[i].ai_movs.movs.empty() );
                 }
             }
             if ( ! ai_eve ) break;
