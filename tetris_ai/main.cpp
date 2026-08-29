@@ -1582,7 +1582,7 @@ void mainscene() {
             char buff[64];
             snprintf( buff, sizeof(buff), "auto start in %d s", ( autostart_wait + 59 ) / 60 );
             int tw = textwidth(buff), th = textheight(buff);
-            int tx = ( getwidth() - tw ) / 2, ty = ( getheight() - th ) / 2;
+            int tx = ( getwidth() - tw ) / 2, ty = getheight() - th;
             setfillcolor(EGERGB(0, 0, 0));
             bar( tx - 10, ty - 6, tx + tw + 10, ty + th + 6 );
             setcolor(EGERGB(0xff, 0xff, 0xff));
