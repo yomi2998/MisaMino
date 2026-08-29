@@ -536,6 +536,7 @@ struct tetris_rule {
 struct tetris_player {
     int tojsoftdrop;
     int das;
+    int arr;
     int softdropdelay;
     int softdropdas;
     int sound_p1;
@@ -544,6 +545,7 @@ struct tetris_player {
     tetris_player() {
         tojsoftdrop = 1;
         das = 8;
+        arr = 0;
         softdropdelay = 10;
         softdropdas = 10;
         sound_p1 = 1;
@@ -623,6 +625,10 @@ void loadPlayerSetting(CProfile& config, tetris_player& player) {
         player.das = config.ReadInteger( "das" );
         if ( player.das < 0 ) player.das = 0;
     }
+    if ( config.IsInteger( "arr" ) ) {
+        player.arr = config.ReadInteger( "arr" );
+        if ( player.arr < 0 ) player.arr = 0;
+    }
     if ( config.IsInteger( "softdropdas" ) ) {
         player.softdropdas = config.ReadInteger( "softdropdas" );
         if ( player.softdropdas < 0 ) player.softdropdas = 0;
@@ -659,7 +665,16 @@ void mainscene() {
     tetris_ai ai[2];
     int ai_first_delay = 30;
     int ai_move_delay = 20;
+    int ai_handling = 0;
+    int ai_das = 8;
+    int ai_arr = 10;
+    int ai_softdropdas = 10;
+    int ai_softdropdelay = 10;
     int ai_4w = 1;
+    int ai_hold_dir[2] = {0, 0};
+    int ai_hold_cnt[2] = {0, 0};
+    int ai_hold_gap[2] = {0, 0};
+    int ai_hold_last[2] = {0, 0};
 
 
     bool showAttackLine = true;
@@ -686,6 +701,26 @@ void mainscene() {
         if ( config.IsInteger( "move" ) ) {
             ai_move_delay = config.ReadInteger( "move" );
             if ( ai_move_delay < 0 ) ai_move_delay = 0;
+        }
+        if ( config.IsInteger( "handling" ) ) {
+            ai_handling = config.ReadInteger( "handling" );
+            if ( ai_handling != 0 ) ai_handling = 1;
+        }
+        if ( config.IsInteger( "das" ) ) {
+            ai_das = config.ReadInteger( "das" );
+            if ( ai_das < 0 ) ai_das = 0;
+        }
+        if ( config.IsInteger( "arr" ) ) {
+            ai_arr = config.ReadInteger( "arr" );
+            if ( ai_arr < 0 ) ai_arr = 0;
+        }
+        if ( config.IsInteger( "softdropdas" ) ) {
+            ai_softdropdas = config.ReadInteger( "softdropdas" );
+            if ( ai_softdropdas < 0 ) ai_softdropdas = 0;
+        }
+        if ( config.IsInteger( "softdropdelay" ) ) {
+            ai_softdropdelay = config.ReadInteger( "softdropdelay" );
+            if ( ai_softdropdelay < 0 ) ai_softdropdelay = 0;
         }
         if ( config.IsInteger( "4w" ) ) {
             ai_4w = config.ReadInteger( "4w" );
@@ -1156,6 +1191,8 @@ void mainscene() {
                         if ( !tetris[0].alive() || !tetris[1].alive() || tetris[0].n_pieces <= 20 ) {
                             int seed = (unsigned)time(0), pass = rnd.randint(1024);
                             for ( int i = 0; i < players_num; ++i ) {
+                                ai_hold_dir[i] = 0;
+                                ai_hold_cnt[i] = 0;
                                 tetris[i].reset( seed ^ ((!rule.samesequence) * i * 255), pass );
                                 //tetris[i].reset( (unsigned)time(0) + (unsigned)(plat::now_seconds() * 1000) * i );
                                 onGameStart( tetris[i], rnd, i );
@@ -1189,20 +1226,25 @@ void mainscene() {
                 for (int i = 0; i < 3; ++i) {
                     if ( player_key_state[i] > 0) {
                         ++player_key_state[i];
-                        if ( i == 2 ) player_key_state[i] += 9;
+                        player_key_state[i] += 9;
                         if ( player.tojsoftdrop && i == 2 ) {
                             while ( player_key_state[i] > (player.softdropdas + 1) * 10 ) {
                                 bool move = tetris[0].tryYMove( 1);
                                 if ( ! move && player.softdropdelay <= 0) break;
                                 player_key_state[i] -= player.softdropdelay;
                             }
-                        } else if ( player_key_state[i] > player.das + 1 ) {
-                            if ( i == 0 ) {
+                        } else if ( player_key_state[i] > (player.das + 1) * 10 ) {
+                            if ( i == 2 ) {
+                                tetris[0].tryYYMove( 1) ;
+                            } else if ( player.arr > 0 ) {
+                                while ( player_key_state[i] > (player.das + 1) * 10 ) {
+                                    if ( ! tetris[0].tryXMove( i == 0 ? -1 : 1) ) break;
+                                    player_key_state[i] -= player.arr;
+                                }
+                            } else if ( i == 0 ) {
                                 tetris[0].tryXXMove(-1);
                             } else if ( i == 1 ) {
                                 tetris[0].tryXXMove( 1) ;
-                            } else if ( i == 2 ) {
-                                tetris[0].tryYYMove( 1) ;
                             }
                         }
                     }
@@ -1213,6 +1255,8 @@ void mainscene() {
                 if ( tetris[i].game() ) { // 游戏执行，如果丢下返回true
 					if(i != 0)
 						sw = true;
+                    ai_hold_dir[i] = 0;
+                    ai_hold_cnt[i] = 0;
                     tetris[i].env_change = 1;
                     tetris[i].ai_plan_started = 0;
                     tetris[i].ai_plan_replans = 0;
@@ -1291,6 +1335,8 @@ void mainscene() {
                         }
                         bool canhold = tetris[i].hold;
                         tetris[i].ai_plan_started = 0;
+                        ai_hold_dir[i] = 0;
+                        ai_hold_cnt[i] = 0;
 
                         if ( tetris[i].pTetrisAI ) {
                             AI::RunAIDll(tetris[i].pTetrisAI, tetris[i].ai_movs, tetris[i].ai_movs_flag, tetris[i].m_ai_param, tetris[i].m_pool, tetris[i].m_hold,
@@ -1352,12 +1398,36 @@ void mainscene() {
                     do
                     {
                         if ( tetris[i].ai_delay > 0 ) ;
+                        else if ( ai_hold_dir[i] != 0 ) {
+                            int g = ai_hold_gap[i];
+                            if ( tetris[i].ai_movs_flag == -1 && ! tetris[i].ai_movs.movs.empty() && tetris[i].ai_movs.movs[0] != ai_hold_last[i] ) {
+                                g = g * 8 / 12;
+                            }
+                            if ( ai_hold_dir[i] == 2 ) {
+                                ai_hold_cnt[i] += 10;
+                                while ( ai_hold_cnt[i] > ( ai_softdropdas + 1 ) * 10 ) {
+                                    if ( ! tetris[i].tryYMove(1) ) { ai_hold_dir[i] = 0; break; }
+                                    if ( ai_softdropdelay > 0 ) ai_hold_cnt[i] -= ai_softdropdelay;
+                                }
+                                if ( ai_hold_dir[i] != 0 ) tetris[i].ai_delay = 1;
+                                else tetris[i].ai_delay = g;
+                            } else {
+                                ai_hold_cnt[i] += 10;
+                                while ( ai_hold_cnt[i] >= ai_arr ) {
+                                    if ( ! tetris[i].tryXMove(ai_hold_dir[i]) ) { ai_hold_dir[i] = 0; break; }
+                                    if ( ai_arr > 0 ) ai_hold_cnt[i] -= ai_arr;
+                                }
+                                if ( ai_hold_dir[i] != 0 ) tetris[i].ai_delay = 1;
+                                else tetris[i].ai_delay = g;
+                            }
+                        }
                         else if ( tetris[i].ai_movs_flag == -1 && ( tetris[i].env_change == 0 || tetris[i].ai_plan_started || tetris[i].ai_plan_replans >= 2 ) && ! tetris[i].ai_movs.movs.empty() ){
                             if ( rule.turnbase && ai[0].style == 0 ) {
                                 tetris[i].ai_delay = ai_mov_time_base;
                             } else {
                                 tetris[i].ai_delay = ai_move_delay;
                             }
+                            int gap = tetris[i].ai_delay;
                             int mov = tetris[i].ai_movs.movs[0];
                             if ( tetris[i].ai_movs.movs.size() > 1 ) {
                                 int next_mov = tetris[i].ai_movs.movs[1];
@@ -1371,9 +1441,39 @@ void mainscene() {
                             else if (mov == AI::Moving::MOV_D) tetris[i].tryYMove( 1);
                             else if (mov == AI::Moving::MOV_LSPIN) tetris[i].trySpin(1);
                             else if (mov == AI::Moving::MOV_RSPIN) tetris[i].trySpin(3);
-                            else if (mov == AI::Moving::MOV_LL) { tetris[i].tryXXMove(-1); } //{ tetris[i].mov_llrr = AI::Moving::MOV_LL; }
-                            else if (mov == AI::Moving::MOV_RR) { tetris[i].tryXXMove( 1); } //{ tetris[i].mov_llrr = AI::Moving::MOV_RR; }
-                            else if (mov == AI::Moving::MOV_DD) tetris[i].tryYYMove( 1) ;
+                            else if (mov == AI::Moving::MOV_LL) {
+                                if ( ai_handling && tetris[i].tryXMove(-1) ) {
+                                    ai_hold_dir[i] = -1;
+                                    ai_hold_cnt[i] = 0;
+                                    ai_hold_gap[i] = gap;
+                                    ai_hold_last[i] = mov;
+                                    tetris[i].ai_delay = ai_das + 1;
+                                } else {
+                                    tetris[i].tryXXMove(-1);
+                                }
+                            }
+                            else if (mov == AI::Moving::MOV_RR) {
+                                if ( ai_handling && tetris[i].tryXMove( 1) ) {
+                                    ai_hold_dir[i] = 1;
+                                    ai_hold_cnt[i] = 0;
+                                    ai_hold_gap[i] = gap;
+                                    ai_hold_last[i] = mov;
+                                    tetris[i].ai_delay = ai_das + 1;
+                                } else {
+                                    tetris[i].tryXXMove( 1);
+                                }
+                            }
+                            else if (mov == AI::Moving::MOV_DD) {
+                                if ( ai_handling && tetris[i].tryYMove( 1) ) {
+                                    ai_hold_dir[i] = 2;
+                                    ai_hold_cnt[i] = 1;
+                                    ai_hold_gap[i] = gap;
+                                    ai_hold_last[i] = mov;
+                                    tetris[i].ai_delay = 1;
+                                } else {
+                                    tetris[i].tryYYMove( 1) ;
+                                }
+                            }
                             else if (mov == AI::Moving::MOV_DROP) tetris[i].drop();
                             else if (mov == AI::Moving::MOV_HOLD) {
                                 tetris[i].tryHold();
@@ -1408,6 +1508,18 @@ void mainscene() {
         }
     }
     saveKeySetting( player_keys );
+    {
+        double wait_beg = plat::now_seconds();
+        bool busy = true;
+        while ( busy && plat::now_seconds() - wait_beg < 10.0 ) {
+            busy = false;
+            for ( int i = 0; i < players_num; ++i ) {
+                if ( tetris[i].ai_movs_flag != -1 ) busy = true;
+            }
+            if ( busy ) delay_ms( 1 );
+        }
+        if ( busy ) _Exit( 0 );
+    }
 }
 
 int main () {
