@@ -1581,8 +1581,12 @@ void mainscene() {
         if ( rule.autostart && autostart_wait > 0 ) {
             char buff[64];
             snprintf( buff, sizeof(buff), "auto start in %d s", ( autostart_wait + 59 ) / 60 );
-            setcolor(EGERGB(0xa0, 0xa0, 0xa0));
-            xyprintf(0, getheight() - textheight("I") * 2, "%s", buff);
+            int tw = textwidth(buff), th = textheight(buff);
+            int tx = ( getwidth() - tw ) / 2, ty = ( getheight() - th ) / 2;
+            setfillcolor(EGERGB(0, 0, 0));
+            bar( tx - 10, ty - 6, tx + tw + 10, ty + th + 6 );
+            setcolor(EGERGB(0xff, 0xff, 0xff));
+            xyprintf(tx, ty, "%s", buff);
         }
         {
             char buff[16];
