@@ -520,6 +520,8 @@ struct tetris_rule {
     int samesequence;
     int turn;
 	int revert;
+    int autostart;
+    int autostart_interval;
     tetris_rule() {
         turnbase = 1;
         garbage = 0;
@@ -531,6 +533,8 @@ struct tetris_rule {
         samesequence = 1;
         turn = 7;
 		revert = 1;
+        autostart = 0;
+        autostart_interval = 5;
     }
 };
 struct tetris_player {
@@ -613,6 +617,14 @@ void loadRule(CProfile& config, tetris_rule& rule) {
 	if (config.IsInteger("revert")) {
 		if(kos_turnbase)
 			rule.revert = config.ReadInteger("revert");
+	}
+	if (config.IsInteger("autostart")) {
+		rule.autostart = config.ReadInteger("autostart");
+		if (rule.autostart != 0) rule.autostart = 1;
+	}
+	if (config.IsInteger("autostart_interval")) {
+		rule.autostart_interval = config.ReadInteger("autostart_interval");
+		if (rule.autostart_interval < 1) rule.autostart_interval = 1;
 	}
 
 }
@@ -1100,7 +1112,22 @@ void mainscene() {
     }
     double ai_time = 0;
     int lastGameState = -1;
+    int autostart_wait = 0;
 	bool sw = false;
+    auto restartGame = [&]() {
+        int seed = (unsigned)time(0), pass = rnd.randint(1024);
+        pending_n = 0;
+        for ( int i = 0; i < players_num; ++i ) {
+            ai_hold_dir[i] = 0;
+            ai_hold_cnt[i] = 0;
+            tetris[i].reset( seed ^ ((!rule.samesequence) * i * 255), pass );
+            //tetris[i].reset( (unsigned)time(0) + (unsigned)(plat::now_seconds() * 1000) * i );
+            onGameStart( tetris[i], rnd, i );
+            tetris[i].acceptAttack(player_begin_attack);
+        }
+        if ( player.sound_bgm ) GameSound::ins().loadBGM( rnd );
+        autostart_wait = 0;
+    };
     for ( ; is_run() ; normal_delay ? delay_fps(60) : delay_ms(0) ) {
         for ( int jf = 0; jf < mainloop_times; ++jf) {
 
@@ -1117,6 +1144,10 @@ void mainscene() {
                     }
                     //GameSound::ins().stopBGM();
                     if ( player.sound_bgm ) GameSound::ins().loadBGM_wait( rnd );
+                    if ( rule.autostart ) autostart_wait = rule.autostart_interval * 60;
+                } else if ( rule.autostart && ! game_pause && autostart_wait > 0 ) {
+                    --autostart_wait;
+                    if ( autostart_wait == 0 ) restartGame();
                 }
                 lastGameState = -1;
             }
@@ -1219,17 +1250,7 @@ void mainscene() {
 					}
                     if ( k.key == key_f2 ) {
                         if ( !tetris[0].alive() || !tetris[1].alive() || tetris[0].n_pieces <= 20 ) {
-                            int seed = (unsigned)time(0), pass = rnd.randint(1024);
-                            pending_n = 0;
-                            for ( int i = 0; i < players_num; ++i ) {
-                                ai_hold_dir[i] = 0;
-                                ai_hold_cnt[i] = 0;
-                                tetris[i].reset( seed ^ ((!rule.samesequence) * i * 255), pass );
-                                //tetris[i].reset( (unsigned)time(0) + (unsigned)(plat::now_seconds() * 1000) * i );
-                                onGameStart( tetris[i], rnd, i );
-                                tetris[i].acceptAttack(player_begin_attack);
-                            }
-                            if ( player.sound_bgm ) GameSound::ins().loadBGM( rnd );
+                            restartGame();
                         }
                     }
                     if ( k.key == key_f12 ) {
@@ -1556,6 +1577,12 @@ void mainscene() {
         if ( game_info_time > 0 ) {
             --game_info_time;
             xyprintf( 0, getheight() - textheight("I"), "%s", game_info.c_str());
+        }
+        if ( rule.autostart && autostart_wait > 0 ) {
+            char buff[64];
+            snprintf( buff, sizeof(buff), "auto start in %d s", ( autostart_wait + 59 ) / 60 );
+            setcolor(EGERGB(0xa0, 0xa0, 0xa0));
+            xyprintf(0, getheight() - textheight("I") * 2, "%s", buff);
         }
         {
             char buff[16];
