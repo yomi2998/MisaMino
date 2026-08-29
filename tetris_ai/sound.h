@@ -73,7 +73,7 @@ public:
             }
             mOpen = false;
         }
-        int open( float * volume, const char* path, int nMax = 2, int loop = 0 ) {
+        int open( float * volume, const char* path, int nMax = 4, int loop = 0 ) {
             mVolume = volume;
             for ( int i = 0; i < 16; ++i) {
                 if ( m[i] ) {
@@ -105,20 +105,27 @@ public:
         }
         int play( int lr = 0) {
             if ( ! mOpen ) return 0;
-            mIndex = (mIndex+1) % mMax;
-            if ( m[mIndex] ) {
-                if ( lr == 1 ) {
-                    ma_sound_set_pan(m[mIndex], -0.7);
-                } else if ( lr == 2 ) {
-                    ma_sound_set_pan(m[mIndex], 0.7);
-                } else {
-                    ma_sound_set_pan(m[mIndex], 0);
-                }
-                if ( mVolume ) ma_sound_set_volume(m[mIndex], *mVolume);
-                ma_sound_stop(m[mIndex]);
-                return ma_sound_start(m[mIndex]) == MA_SUCCESS ? 1 : 0;
+            int idx = -1;
+            for ( int k = 1; k <= mMax; ++k ) {
+                int cand = (mIndex + k) % mMax;
+                if ( m[cand] && ! ma_sound_is_playing(m[cand]) ) { idx = cand; break; }
             }
-            return 0;
+            if ( idx < 0 ) {
+                idx = (mIndex + 1) % mMax;
+                if ( ! m[idx] ) return 0;
+            }
+            mIndex = idx;
+            ma_sound* s = m[mIndex];
+            if ( lr == 1 ) {
+                ma_sound_set_pan(s, -0.7);
+            } else if ( lr == 2 ) {
+                ma_sound_set_pan(s, 0.7);
+            } else {
+                ma_sound_set_pan(s, 0);
+            }
+            if ( mVolume ) ma_sound_set_volume(s, *mVolume);
+            ma_sound_seek_to_pcm_frame(s, 0);
+            return ma_sound_start(s) == MA_SUCCESS ? 1 : 0;
         }
         int stop() {
             if ( m[mIndex] ) {
