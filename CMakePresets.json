@@ -1,0 +1,41 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "FETCHCONTENT_BASE_DIR": "${sourceDir}/build/deps/${presetName}"
+      }
+    },
+    {
+      "name": "win32",
+      "displayName": "Windows 32-bit",
+      "inherits": "base",
+      "architecture": "win32",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "win64",
+      "displayName": "Windows 64-bit",
+      "inherits": "base",
+      "architecture": "x64",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "dev",
+      "displayName": "Native defaults (Linux/macOS)",
+      "inherits": "base",
+      "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "win32-release", "configurePreset": "win32", "configuration": "Release" },
+    { "name": "win32-debug", "configurePreset": "win32", "configuration": "Debug" },
+    { "name": "win64-release", "configurePreset": "win64", "configuration": "Release" },
+    { "name": "dev-release", "configurePreset": "dev", "configuration": "Release" },
+    { "name": "dev-debug", "configurePreset": "dev", "configuration": "Debug" }
+  ]
+}

@@ -23,7 +23,11 @@ set(DLLAI_SOURCES
 
 add_library(misamino_ai SHARED ${DLLAI_SOURCES})
 target_include_directories(misamino_ai PRIVATE dllai)
-set_target_properties(misamino_ai PROPERTIES OUTPUT_NAME misamino_ai)
+if(WIN32)
+  set_target_properties(misamino_ai PROPERTIES OUTPUT_NAME dllai)
+else()
+  set_target_properties(misamino_ai PROPERTIES OUTPUT_NAME misamino_ai)
+endif()
 if(NOT WIN32)
   set_target_properties(misamino_ai PROPERTIES POSITION_INDEPENDENT_CODE ON C_VISIBILITY_PRESET default)
 endif()
@@ -66,6 +70,9 @@ endforeach()
 option(MISAMINO_BUILD_APP "Build the Tspin game (SDL2 graphics + miniaudio sound)" ON)
 
 if(MISAMINO_BUILD_APP)
+  if(POLICY CMP0169)
+    cmake_policy(SET CMP0169 OLD)
+  endif()
   include(FetchContent)
   set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
   set(SDL_SHARED OFF CACHE BOOL "" FORCE)
@@ -121,4 +128,13 @@ if(MISAMINO_BUILD_APP)
     COMMAND ${CMAKE_COMMAND} -E copy_directory
       ${CMAKE_CURRENT_SOURCE_DIR}/tetris_ai/data
       $<TARGET_FILE_DIR:Tspin>/data)
+  add_custom_command(TARGET Tspin POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${CMAKE_CURRENT_SOURCE_DIR}/tetris_ai/bin/misamino.ini
+      $<TARGET_FILE_DIR:Tspin>/misamino.ini)
+  add_dependencies(Tspin misamino_ai)
+  add_custom_command(TARGET Tspin POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      $<TARGET_FILE:misamino_ai>
+      $<TARGET_FILE_DIR:Tspin>/$<TARGET_FILE_NAME:misamino_ai>)
 endif()
