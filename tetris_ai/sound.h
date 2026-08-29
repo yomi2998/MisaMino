@@ -17,7 +17,9 @@ class GameSound {
 protected:
     GameSound() {
         mVolume = 0.5f;
-        mBgmVolume = 0.3f;
+        mMusicRatio = 0.6f;
+        mMusicMuted = false;
+        mBgmVolume = mVolume * mMusicRatio;
         mReady = false;
         ma_engine_config cfg = ma_engine_config_init();
         mEngine = new ma_engine;
@@ -196,19 +198,38 @@ public:
     void stopBGM() {
         mbgm.stop();
     }
+    void updateBgmVolume() {
+        mBgmVolume = mMusicMuted ? 0.0f : mVolume * mMusicRatio;
+        mbgm.setVolume(mBgmVolume);
+    }
     void setVolume( float volume ) {
         mVolume = volume;
         if ( mVolume < 0.0 ) mVolume = 0;
         if ( mVolume > 1.0 ) mVolume = 1.0f;
-        mBgmVolume = mVolume * 0.6f;
-        mbgm.setVolume(mBgmVolume);
+        updateBgmVolume();
     }
     void setVolumeAdd( float add ) {
         mVolume += add;
         if ( mVolume < 0.0 ) mVolume = 0;
         if ( mVolume > 1.0 ) mVolume = 1.0f;
-        mBgmVolume = mVolume * 0.6f;
-        mbgm.setVolume(mBgmVolume);
+        updateBgmVolume();
+    }
+    void setMusicVolumeAdd( float add ) {
+        mMusicRatio += add;
+        if ( mMusicRatio < 0.0f ) mMusicRatio = 0;
+        if ( mMusicRatio > 1.0f ) mMusicRatio = 1.0f;
+        if ( mMusicRatio > 0.0f ) mMusicMuted = false;
+        updateBgmVolume();
+    }
+    void toggleMusicMute() {
+        mMusicMuted = ! mMusicMuted;
+        updateBgmVolume();
+    }
+    float getMusicVolume() const {
+        return mMusicRatio;
+    }
+    bool isMusicMuted() const {
+        return mMusicMuted;
     }
     float getVolume() const {
         return mVolume;
@@ -232,6 +253,8 @@ public:
     sound mSFX_pc;
     sound mbgm;
     float mVolume;
+    float mMusicRatio;
+    bool mMusicMuted;
     float mBgmVolume;
     ma_engine* mEngine;
     bool mReady;

@@ -546,7 +546,7 @@ struct tetris_player {
         tojsoftdrop = 1;
         das = 8;
         arr = 0;
-        softdropdelay = 10;
+        softdropdelay = 1;
         softdropdas = 10;
         sound_p1 = 1;
         sound_p2 = 0;
@@ -667,9 +667,9 @@ void mainscene() {
     int ai_move_delay = 20;
     int ai_handling = 0;
     int ai_das = 8;
-    int ai_arr = 10;
+    int ai_arr = 1;
     int ai_softdropdas = 10;
-    int ai_softdropdelay = 10;
+    int ai_softdropdelay = 1;
     int ai_4w = 1;
     int ai_hold_dir[2] = {0, 0};
     int ai_hold_cnt[2] = {0, 0};
@@ -1221,23 +1221,36 @@ void mainscene() {
                         game_info += str;
                         game_info_time = 240;
                     }
+                    if ( k.key == key_f7 || k.key == key_f8 ) {
+                        char str[64];
+                        if ( k.key == key_f7 ) GameSound::ins().setMusicVolumeAdd(-0.05f) ;
+                        if ( k.key == key_f8 ) GameSound::ins().setMusicVolumeAdd(+0.05f);
+                        snprintf( str, 64, "%d %%", int(GameSound::ins().getMusicVolume() * 100 + 0.5) );
+                        game_info = "set music volume = ";
+                        game_info += str;
+                        game_info_time = 240;
+                    }
+                    if ( k.key == key_f9 ) {
+                        GameSound::ins().toggleMusicMute();
+                        game_info = GameSound::ins().isMusicMuted() ? "music muted" : "music unmuted";
+                        game_info_time = 240;
+                    }
                 }
                 if ( game_pause ) continue;
                 for (int i = 0; i < 3; ++i) {
                     if ( player_key_state[i] > 0) {
                         ++player_key_state[i];
-                        player_key_state[i] += 9;
                         if ( player.tojsoftdrop && i == 2 ) {
-                            while ( player_key_state[i] > (player.softdropdas + 1) * 10 ) {
+                            while ( player_key_state[i] > player.softdropdas + 1 ) {
                                 bool move = tetris[0].tryYMove( 1);
                                 if ( ! move && player.softdropdelay <= 0) break;
                                 player_key_state[i] -= player.softdropdelay;
                             }
-                        } else if ( player_key_state[i] > (player.das + 1) * 10 ) {
+                        } else if ( player_key_state[i] > player.das + 1 ) {
                             if ( i == 2 ) {
                                 tetris[0].tryYYMove( 1) ;
                             } else if ( player.arr > 0 ) {
-                                while ( player_key_state[i] > (player.das + 1) * 10 ) {
+                                while ( player_key_state[i] > player.das + 1 ) {
                                     if ( ! tetris[0].tryXMove( i == 0 ? -1 : 1) ) break;
                                     player_key_state[i] -= player.arr;
                                 }
@@ -1404,15 +1417,15 @@ void mainscene() {
                                 g = g * 8 / 12;
                             }
                             if ( ai_hold_dir[i] == 2 ) {
-                                ai_hold_cnt[i] += 10;
-                                while ( ai_hold_cnt[i] > ( ai_softdropdas + 1 ) * 10 ) {
+                                ++ai_hold_cnt[i];
+                                while ( ai_hold_cnt[i] > ai_softdropdas + 1 ) {
                                     if ( ! tetris[i].tryYMove(1) ) { ai_hold_dir[i] = 0; break; }
                                     if ( ai_softdropdelay > 0 ) ai_hold_cnt[i] -= ai_softdropdelay;
                                 }
                                 if ( ai_hold_dir[i] != 0 ) tetris[i].ai_delay = 1;
                                 else tetris[i].ai_delay = g;
                             } else {
-                                ai_hold_cnt[i] += 10;
+                                ++ai_hold_cnt[i];
                                 while ( ai_hold_cnt[i] >= ai_arr ) {
                                     if ( ! tetris[i].tryXMove(ai_hold_dir[i]) ) { ai_hold_dir[i] = 0; break; }
                                     if ( ai_arr > 0 ) ai_hold_cnt[i] -= ai_arr;
