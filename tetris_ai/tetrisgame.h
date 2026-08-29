@@ -190,17 +190,17 @@ public:
         m_ko = 0;
         m_att_info = "";
     }
-    bool tryXMove(int dx) {
+    bool tryXMove(int dx, bool play_sfx = true) {
         bool ret = Tetris::tryXMove( dx );
-        if ( mSFXon && ret ) {
+        if ( mSFXon && ret && play_sfx ) {
             GameSound::ins().mSFX_move.play( m_lr );
         }
         return ret;
     }
-    bool tryXXMove(int dx) {
+    bool tryXXMove(int dx, bool play_sfx = true) {
         bool ret = Tetris::tryXMove( dx );
         while ( Tetris::tryXMove(dx) ) ;
-        if ( mSFXon && ret ) {
+        if ( mSFXon && ret && play_sfx ) {
             GameSound::ins().mSFX_move.play( m_lr );
         }
         return ret;

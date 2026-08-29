@@ -773,6 +773,28 @@ void mainscene() {
 
     int player_key_state[9] = {0};
     int player_last_key = 0;
+    int pending_act[8] = {0};
+    int pending_age[8] = {0};
+    int pending_n = 0;
+    auto add_pending = [&](int act) {
+        if ( pending_n < 8 ) { pending_act[pending_n] = act; pending_age[pending_n] = 0; ++pending_n; }
+    };
+    auto tap_failed_off_piece = [&](bool ok) {
+        return ! ok && tetris[0].m_state != AI::Tetris::STATE_MOVING;
+    };
+    auto apply_player_tap = [&](int act) -> bool {
+        if ( ! tetris[0].alive() || tetris[0].m_state != AI::Tetris::STATE_MOVING ) return false;
+        if (0) ;
+        else if (act == 0) return tetris[0].tryXMove(-1);
+        else if (act == 1) return tetris[0].tryXMove( 1);
+        else if (act == 2) return tetris[0].tryYMove( 1);
+        else if (act == 3) return tetris[0].trySpin(1);
+        else if (act == 4) return tetris[0].trySpin(3);
+        else if (act == 5) return tetris[0].tryHold();
+        else if (act == 6) return tetris[0].drop();
+        else if (act == 7) return AI::spin180Enable() && tetris[0].trySpin180();
+        return false;
+    };
 
     std::string game_info;
     int game_info_time = 0;
@@ -1141,34 +1163,40 @@ void mainscene() {
                     //    player_last_key = k.key;
                     //}
                     if ( k.key == player_keys[0] && player_key_state[0] == 0 ) {
-                        tetris[0].tryXMove(-1);
+                        bool ok = tetris[0].tryXMove(-1);
+                        if ( tap_failed_off_piece(ok) ) add_pending(0);
                         player_key_state[0] = 1;
                         player_key_state[1] = 0;
                         //player_key_state[2] = 0;
                     }
                     if ( k.key == player_keys[1] && player_key_state[1] == 0 ) {
-                        tetris[0].tryXMove( 1);
+                        bool ok = tetris[0].tryXMove( 1);
+                        if ( tap_failed_off_piece(ok) ) add_pending(1);
                         player_key_state[0] = 0;
                         player_key_state[1] = 1;
                         //player_key_state[2] = 0;
                     }
                     if ( k.key == player_keys[2] && player_key_state[2] == 0 ) {
-                        tetris[0].tryYMove( 1);
+                        bool ok = tetris[0].tryYMove( 1);
+                        if ( tap_failed_off_piece(ok) ) add_pending(2);
                         //while ( tetris[0].tryYMove( 1) );
                         //player_key_state[0] = 0;
                         //player_key_state[1] = 0;
                         player_key_state[2] = 1;
                     }
                     if ( k.key == player_keys[3] && player_key_state[3] == 0 ) {
-                        tetris[0].trySpin( 1);
+                        bool ok = tetris[0].trySpin( 1);
+                        if ( tap_failed_off_piece(ok) ) add_pending(3);
                         player_key_state[3] = 1;
                     }
                     if ( k.key == player_keys[4] && player_key_state[4] == 0 ) {
-                        tetris[0].trySpin( 3);
+                        bool ok = tetris[0].trySpin( 3);
+                        if ( tap_failed_off_piece(ok) ) add_pending(4);
                         player_key_state[4] = 1;
                     }
                     if ( k.key == player_keys[5] && player_key_state[5] == 0 ) {
-                        tetris[0].tryHold();
+                        bool ok = tetris[0].tryHold();
+                        if ( tap_failed_off_piece(ok) ) add_pending(5);
                         player_key_state[5] = 1;
                     }
                     if ( k.key == player_keys[6] && player_key_state[6] == 0 ) {
@@ -1179,17 +1207,20 @@ void mainscene() {
                         player_key_state[6] = 1;
                     }
                     if ( k.key == player_keys[7] && player_key_state[7] == 0 && AI::spin180Enable() ) {
-                        tetris[0].trySpin180();
+                        bool ok = tetris[0].trySpin180();
+                        if ( tap_failed_off_piece(ok) ) add_pending(7);
                         player_key_state[7] = 1;
                     }
 					if (k.key == player_keys[8] && player_key_state[8] == 0 && rule.turn > 1) {
 						tetris[0] = t;
 						tetris[1] = t2;
+						pending_n = 0;
 						player_key_state[8] = 1;
 					}
                     if ( k.key == key_f2 ) {
                         if ( !tetris[0].alive() || !tetris[1].alive() || tetris[0].n_pieces <= 20 ) {
                             int seed = (unsigned)time(0), pass = rnd.randint(1024);
+                            pending_n = 0;
                             for ( int i = 0; i < players_num; ++i ) {
                                 ai_hold_dir[i] = 0;
                                 ai_hold_cnt[i] = 0;
@@ -1203,6 +1234,7 @@ void mainscene() {
                     }
                     if ( k.key == key_f12 ) {
                         setkeyScene( player_keys );
+                        pending_n = 0;
                         for ( int i = 0; i < 9; ++i)
                             player_key_state[i] = 0;
                     }
@@ -1251,7 +1283,7 @@ void mainscene() {
                                 tetris[0].tryYYMove( 1) ;
                             } else if ( player.arr > 0 ) {
                                 while ( player_key_state[i] > player.das + 1 ) {
-                                    if ( ! tetris[0].tryXMove( i == 0 ? -1 : 1) ) break;
+                                    if ( ! tetris[0].tryXMove( i == 0 ? -1 : 1, false ) ) break;
                                     player_key_state[i] -= player.arr;
                                 }
                             } else if ( i == 0 ) {
@@ -1380,6 +1412,17 @@ void mainscene() {
                     tetris[i].env_change = 0;
                 }
             }
+            for ( int i = 0; i < pending_n; ++i ) ++pending_age[i];
+            while ( pending_n > 0 && pending_age[0] > 5 ) {
+                for ( int i = 0; i < pending_n - 1; ++i ) { pending_act[i] = pending_act[i+1]; pending_age[i] = pending_age[i+1]; }
+                --pending_n;
+            }
+            while ( pending_n > 0 && tetris[0].alive() && tetris[0].m_state == AI::Tetris::STATE_MOVING ) {
+                int act = pending_act[0];
+                for ( int i = 0; i < pending_n - 1; ++i ) { pending_act[i] = pending_act[i+1]; pending_age[i] = pending_age[i+1]; }
+                --pending_n;
+                apply_player_tap(act);
+            }
             for ( int i = 0; i < players_num; ++i ) { // 100 garbage buffer get lost
                 if ( ! tetris[i].alive() ) continue;
                 int total = 0;
@@ -1427,7 +1470,7 @@ void mainscene() {
                             } else {
                                 ++ai_hold_cnt[i];
                                 while ( ai_hold_cnt[i] >= ai_arr ) {
-                                    if ( ! tetris[i].tryXMove(ai_hold_dir[i]) ) { ai_hold_dir[i] = 0; break; }
+                                    if ( ! tetris[i].tryXMove(ai_hold_dir[i], false) ) { ai_hold_dir[i] = 0; break; }
                                     if ( ai_arr > 0 ) ai_hold_cnt[i] -= ai_arr;
                                 }
                                 if ( ai_hold_dir[i] != 0 ) tetris[i].ai_delay = 1;
