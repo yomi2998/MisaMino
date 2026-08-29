@@ -3,12 +3,13 @@
 #define GENMOV_W_MASK   15
 #define SWITCH_USING_HEIGHT_OPT
 
+#define _MACRO_CAT2(a,b) a##b
 #define _MACRO_CREATE_MOVINGSIMPLE(arg_action_name,arg_wkspin) \
     MovingSimple nm = m; \
     nm.x = nx; \
     nm.y = ny; \
     nm.spin = ns; \
-    nm.lastmove = Moving::##arg_action_name##; \
+    nm.lastmove = Moving::arg_action_name; \
     nm.wallkick_spin = arg_wkspin
 
 #define _MACRO_CREATE_MOVING(arg_action_name,arg_wkspin) \
@@ -16,10 +17,10 @@
     nm.x = nx; \
     nm.y = ny; \
     nm.spin = ns; \
-    nm.movs.push_back(Moving::##arg_action_name##); \
+    nm.movs.push_back(Moving::arg_action_name); \
     nm.wallkick_spin = arg_wkspin
 #define _MACRO_HASH_POS(arg_hash_table,arg_prefix) \
-    arg_hash_table[##arg_prefix##y][##arg_prefix##s][##arg_prefix##x & GENMOV_W_MASK]
+    arg_hash_table[_MACRO_CAT2(arg_prefix,y)][_MACRO_CAT2(arg_prefix,s)][_MACRO_CAT2(arg_prefix,x) & GENMOV_W_MASK]
 
 namespace AI {
     bool g_spin180 = false;

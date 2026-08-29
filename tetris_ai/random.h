@@ -1,5 +1,6 @@
 #pragma once
 //#include <time.h>
+#include <cstdint>
 
 //************************************************************************
 //  This is a slightly modified version of Equamen mersenne twister.
@@ -32,7 +33,6 @@ namespace AI {
 const int N = 624;
 const int M = 397;
 
-#include <cstdint>
 typedef std::uint32_t uint32;
 
 class mtrandom {

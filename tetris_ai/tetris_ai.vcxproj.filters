@@ -27,6 +27,12 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sdl_graphics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="miniaudio_impl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="tetris_ai.cpp">
       <Filter>ai</Filter>
     </ClCompile>
@@ -46,6 +52,9 @@
   <ItemGroup>
     <ClInclude Include="tetris_gem.h">
       <Filter>ai</Filter>
+    </ClInclude>
+    <ClInclude Include="graphics.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="gamepool.h">
       <Filter>ai</Filter>

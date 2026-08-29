@@ -34,3 +34,7 @@
 build/
 ref/
 build-golden/
+deps-src/
+deps-build-*/
+deps-install-*/
+xlinux/

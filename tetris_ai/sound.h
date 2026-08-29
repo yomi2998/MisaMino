@@ -1,17 +1,52 @@
 #pragma once
 
-#include "bass.h"
-#pragma comment(lib, "bass.lib")
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4244 4245 4267)
+#endif
+#include "external/miniaudio.h"
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+#include "random.h"
 #include <deque>
+#include <string>
+#include <cstdio>
 
 class GameSound {
 protected:
     GameSound() {
         mVolume = 0.5f;
         mBgmVolume = 0.3f;
-        BASS_Init(-1,44100,0,0,NULL);
+        mReady = false;
+        ma_engine_config cfg = ma_engine_config_init();
+        mEngine = new ma_engine;
+        if (ma_engine_init(&cfg, mEngine) == MA_SUCCESS) {
+            ma_engine_start(mEngine);
+            mReady = true;
+        } else {
+            delete mEngine;
+            mEngine = NULL;
+        }
     }
     ~GameSound() {
+        unloadAll();
+        if (mEngine) {
+            ma_engine_uninit(mEngine);
+            delete mEngine;
+            mEngine = NULL;
+        }
+    }
+    void unloadAll() {
+        sound* all[] = {
+            &mSFX_move, &mSFX_hold, &mSFX_rotate, &mSFX_softdrop, &mSFX_harddrop, &mSFX_lockdown,
+            &mSFX_lineattack, &mSFX_b2b_tetris, &mSFX_ko, &mSFX_gameover, &mSFX_pc, &mbgm
+        };
+        for (int i = 0; i < 12; ++i) all[i]->unload();
+        for ( int i = 0; i < 4; ++i ) mSFX_clears[i].unload();
+        for ( int i = 0; i < 20; ++i ) mSFX_combo[i].unload();
+        for ( int i = 0; i < 4; ++i ) mSFX_tspin[i].unload();
+        for ( int i = 0; i < 4; ++i ) mSFX_b2b_tspin[i].unload();
     }
 public:
     class sound {
@@ -24,57 +59,78 @@ public:
             mMax = 1;
         }
         ~sound() {
+            unload();
+        }
+        void unload() {
             for ( int i = 0; i < 16; ++i) {
                 if ( m[i] ) {
-                    BASS_StreamFree(m[i]);
+                    ma_sound_uninit(m[i]);
+                    delete m[i];
                     m[i] = NULL;
                 }
             }
-            BASS_Free();
+            mOpen = false;
         }
         int open( float * volume, const char* path, int nMax = 2, int loop = 0 ) {
             mVolume = volume;
-            if ( m[0] ) {
-                for ( int i = 0; i < 16; ++i) {
-                    if ( m[i] ) {
-                        BASS_StreamFree(m[i]);
-                        m[i] = NULL;
+            for ( int i = 0; i < 16; ++i) {
+                if ( m[i] ) {
+                    ma_sound_uninit(m[i]);
+                    delete m[i];
+                    m[i] = NULL;
+                }
+            }
+            int loaded = 0;
+            if ( GameSound::ins().mEngine ) {
+                for ( int i = 0; i < nMax && i < 16; ++i) {
+                    ma_sound* s = new ma_sound;
+                    if ( ma_sound_init_from_file(GameSound::ins().mEngine, path, 0, NULL, NULL, s) == MA_SUCCESS ) {
+                        if ( loop ) ma_sound_set_looping(s, MA_TRUE);
+                        m[i] = s;
+                        ++loaded;
+                    } else {
+                        delete s;
+                        break;
                     }
                 }
             }
-            m[0] = BASS_StreamCreateFile(FALSE, path, 0, 0, loop?BASS_SAMPLE_LOOP:0);
-            int ret = m[0];
-            mMax = nMax;
-            for ( int i = 1; i < mMax; ++i) {
-                m[i] = BASS_StreamCreateFile(FALSE, path, 0, 0, loop?BASS_SAMPLE_LOOP:0);
-            }
-            mOpen = ret != 0;
-            return ret;
+            mMax = loaded > 0 ? loaded : 1;
+            mOpen = loaded > 0;
+            return loaded;
         }
         bool isOpen() {
             return mOpen;
         }
         int play( int lr = 0) {
+            if ( ! mOpen ) return 0;
             mIndex = (mIndex+1) % mMax;
-            //m[mIndex]->Stop();
-            //setVolume( *mVolume );
-            if ( lr == 1 ) {
-                BASS_ChannelSetAttribute(m[mIndex], BASS_ATTRIB_PAN, -0.7);
-            } else if ( lr == 2 ){
-                BASS_ChannelSetAttribute(m[mIndex], BASS_ATTRIB_PAN,  0.7);
+            if ( m[mIndex] ) {
+                if ( lr == 1 ) {
+                    ma_sound_set_pan(m[mIndex], -0.7);
+                } else if ( lr == 2 ) {
+                    ma_sound_set_pan(m[mIndex], 0.7);
+                } else {
+                    ma_sound_set_pan(m[mIndex], 0);
+                }
+                if ( mVolume ) ma_sound_set_volume(m[mIndex], *mVolume);
+                ma_sound_stop(m[mIndex]);
+                return ma_sound_start(m[mIndex]) == MA_SUCCESS ? 1 : 0;
             }
-            return BASS_ChannelPlay(m[mIndex], TRUE);
+            return 0;
         }
         int stop() {
-            return BASS_ChannelStop(m[mIndex]);
+            if ( m[mIndex] ) {
+                return ma_sound_stop(m[mIndex]) == MA_SUCCESS ? 1 : 0;
+            }
+            return 0;
         }
         void setVolume( float volume ) {
             if ( m[mIndex] ) {
-                BASS_ChannelSetAttribute( m[mIndex], BASS_ATTRIB_VOL, volume );
+                ma_sound_set_volume( m[mIndex], volume );
             }
         }
     private:
-        HSTREAM m[16];
+        ma_sound* m[16];
         int mIndex;
         int mMax;
         bool mOpen;
@@ -103,7 +159,7 @@ public:
         mSFX_b2b_tetris.open(&mVolume, (basePath + "sfx_b2b_tetris.wav").c_str());
         for ( int i = 0; i < 20; ++i) {
             char name[16];
-            sprintf( name, "sfx_combo%d.wav", i + 1);
+            snprintf( name, sizeof(name), "sfx_combo%d.wav", i + 1);
             mSFX_combo[i].open(&mVolume, (basePath + name).c_str());
         }
         mSFX_tspin[0].open(&mVolume, (basePath + "sfx_tspin_mini.wav").c_str());
@@ -157,6 +213,7 @@ public:
     float getVolume() const {
         return mVolume;
     }
+    friend class sound;
 public:
     sound mSFX_move;
     sound mSFX_hold;
@@ -176,4 +233,6 @@ public:
     sound mbgm;
     float mVolume;
     float mBgmVolume;
+    ma_engine* mEngine;
+    bool mReady;
 };

@@ -41,6 +41,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <PlatformTargetShort Condition="'$(Platform)'=='Win32'">Win32</PlatformTargetShort>
+    <PlatformTargetShort Condition="'$(Platform)'=='x64'">x64</PlatformTargetShort>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
@@ -56,11 +60,15 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>      <LanguageStandard>stdcpp23</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp23</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\deps-install-$(PlatformTargetShort)\include\SDL2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\deps-install-$(PlatformTargetShort)\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2-static.lib;SDL2_ttf.lib;freetype.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;advapi32.lib;ole32.lib;oleaut32.lib;uuid.lib;shell32.lib;user32.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -72,7 +80,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>      <LanguageStandard>stdcpp23</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp23</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\deps-install-$(PlatformTargetShort)\include\SDL2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -81,10 +91,14 @@
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\deps-install-$(PlatformTargetShort)\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2-static.lib;SDL2_ttf.lib;freetype.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;advapi32.lib;ole32.lib;oleaut32.lib;uuid.lib;shell32.lib;user32.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="gamepool.cpp" />
+    <ClCompile Include="miniaudio_impl.cpp" />
+    <ClCompile Include="sdl_graphics.cpp" />
     <ClCompile Include="genmove.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="profile.cpp" />
@@ -93,6 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gamepool.h" />
+    <ClInclude Include="graphics.h" />
     <ClInclude Include="profile.h">
     </ClInclude>
     <ClInclude Include="platform.h" />
