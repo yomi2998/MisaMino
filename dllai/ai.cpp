@@ -1,4 +1,5 @@
 #include "ai.h"
+#include <cstdlib>
 
 namespace AI {
     int Evaluate(const GameField& field, int att, int clear, int depth, int player) {

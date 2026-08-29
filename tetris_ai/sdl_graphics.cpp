@@ -302,6 +302,9 @@ void initgraph(int Width, int Height, int Flag) {
     (void)Flag;
     if (g.inited) return;
     SDL_SetMainReady();
+    if ( SDL_GetHint(SDL_HINT_VIDEODRIVER) == NULL && getenv("WAYLAND_DISPLAY") != NULL ) {
+        SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
+    }
     SDL_Init(SDL_INIT_VIDEO);
     TTF_Init();
     g.W = Width;

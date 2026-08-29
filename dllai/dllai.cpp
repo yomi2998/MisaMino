@@ -163,19 +163,20 @@ char* TetrisAI(int overfield[], int field[], int field_w, int field_h, int b2b, 
     }
 
     // return
-    std::map<int, char> outMap;
-    outMap[AI::Moving::MOV_NULL] = ' ';
-    outMap[AI::Moving::MOV_L] = 'l';
-    outMap[AI::Moving::MOV_R] = 'r';
-    outMap[AI::Moving::MOV_LL] = 'L';
-    outMap[AI::Moving::MOV_RR] = 'R';
-    outMap[AI::Moving::MOV_D] = 'd';
-    outMap[AI::Moving::MOV_DD] = 'D';
-    outMap[AI::Moving::MOV_LSPIN] = 'z';
-    outMap[AI::Moving::MOV_SPIN2] = 'x';
-    outMap[AI::Moving::MOV_RSPIN] = 'c';
-    outMap[AI::Moving::MOV_HOLD] = 'v';
-    outMap[AI::Moving::MOV_DROP] = 'V';
+    std::map<int, char> outMap = {
+        {AI::Moving::MOV_NULL, ' '},
+        {AI::Moving::MOV_L, 'l'},
+        {AI::Moving::MOV_R, 'r'},
+        {AI::Moving::MOV_LL, 'L'},
+        {AI::Moving::MOV_RR, 'R'},
+        {AI::Moving::MOV_D, 'd'},
+        {AI::Moving::MOV_DD, 'D'},
+        {AI::Moving::MOV_LSPIN, 'z'},
+        {AI::Moving::MOV_SPIN2, 'x'},
+        {AI::Moving::MOV_RSPIN, 'c'},
+        {AI::Moving::MOV_HOLD, 'v'},
+        {AI::Moving::MOV_DROP, 'V'},
+    };
     std::string out;
     for ( size_t i = 0; i < mov.movs.size(); ++i ) {
         out.push_back(outMap[mov.movs[i]]);

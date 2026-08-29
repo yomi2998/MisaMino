@@ -79,6 +79,7 @@ if(MISAMINO_BUILD_APP)
   if(POLICY CMP0169)
     cmake_policy(SET CMP0169 OLD)
   endif()
+  set(CMAKE_POLICY_VERSION_MINIMUM 3.10)
   include(FetchContent)
   set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
   set(SDL_SHARED OFF CACHE BOOL "" FORCE)
@@ -86,8 +87,8 @@ if(MISAMINO_BUILD_APP)
   set(SDL_TEST OFF CACHE BOOL "" FORCE)
   FetchContent_Declare(SDL2
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.30.12.tar.gz
-    URL_HASH SHA256=560da2e54dd8af933e35bd08fb1b6cf80d4f6938c67710fecf13b7e9bdd6c47e)
+    URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.32.10.tar.gz
+    URL_HASH SHA256=03f9d7c191a837525c9cda6406af2f2e48be02b5e7eb03d949cc9f1e9ca41c8b)
   FetchContent_Declare(FreeType
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     URL https://github.com/freetype/freetype/archive/refs/tags/VER-2-13-3.tar.gz
@@ -102,6 +103,13 @@ if(MISAMINO_BUILD_APP)
   set(SDL2TTF_SAMPLES OFF CACHE BOOL "" FORCE)
   FetchContent_Populate(FreeType)
   FetchContent_MakeAvailable(SDL2)
+  if(NOT MSVC)
+    foreach(sdl_lib_target SDL2 SDL2-static SDL2-shared)
+      if(TARGET ${sdl_lib_target})
+        target_compile_options(${sdl_lib_target} PRIVATE -Wno-discarded-qualifiers)
+      endif()
+    endforeach()
+  endif()
   FetchContent_Populate(SDL2_ttf)
   if(NOT EXISTS "${sdl2_ttf_SOURCE_DIR}/external/freetype/CMakeLists.txt")
     file(COPY "${freetype_SOURCE_DIR}/." DESTINATION "${sdl2_ttf_SOURCE_DIR}/external/freetype")
