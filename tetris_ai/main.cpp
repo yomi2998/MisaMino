@@ -1381,7 +1381,10 @@ void mainscene() {
                     }
                 }
                 if ( tetris[i].env_change && tetris[i].ai_movs_flag == -1) { // AI 计算
-                    if ( ai[i].style && tetris[i].alive() && ( tetris[i].env_change != 2 || ( tetris[i].ai_plan_started == 0 && tetris[i].ai_plan_replans < 2 ) ) ) {
+                    bool ai_finish_cur_move = ( tetris[i].env_change == 2 && ai[i].style && tetris[i].alive()
+                        && ai_hold_dir[i] != 0 && tetris[i].ai_plan_replans < 2 );
+                    if ( ! ai_finish_cur_move ) {
+                    if ( ai[i].style && tetris[i].alive() && ( tetris[i].env_change != 2 || tetris[i].ai_plan_replans < 2 ) ) {
                     //if ( i != 0 && tetris[i].alive() ) {
                         std::vector<AI::Gem> next;
                         for ( int j = 0; j < 32; ++j)
@@ -1389,7 +1392,7 @@ void mainscene() {
                         double beg = plat::now_seconds();
                         int deep = ai_search_height_deep;
                         int upcomeAtt = std::accumulate(tetris[i].accept_atts.begin(), tetris[i].accept_atts.end(), 0);
-                        if ( tetris[i].env_change == 2 && tetris[i].ai_plan_started == 0 ) ++tetris[i].ai_plan_replans;
+                        if ( tetris[i].env_change == 2 ) ++tetris[i].ai_plan_replans;
                         int level = ai[i].level;
                         //if ( tetris[i].m_pool.row[6] ) {
                         //    deep = ai_search_height_deep;
@@ -1399,6 +1402,7 @@ void mainscene() {
                                 level = 9;
                             }
                         }
+                        if ( tetris[i].env_change == 2 && ai_move_delay != 0 ) level /= 2;
                         bool canhold = tetris[i].hold;
                         tetris[i].ai_plan_started = 0;
                         ai_hold_dir[i] = 0;
@@ -1431,6 +1435,7 @@ void mainscene() {
                         }
                     }
                     tetris[i].env_change = 0;
+                    }
                 }
             }
             for ( int i = 0; i < pending_n; ++i ) ++pending_age[i];
@@ -1498,7 +1503,7 @@ void mainscene() {
                                 else tetris[i].ai_delay = g;
                             }
                         }
-                        else if ( tetris[i].ai_movs_flag == -1 && ( tetris[i].env_change == 0 || tetris[i].ai_plan_started || tetris[i].ai_plan_replans >= 2 ) && ! tetris[i].ai_movs.movs.empty() ){
+                        else if ( tetris[i].ai_movs_flag == -1 && ( tetris[i].env_change == 0 || tetris[i].ai_plan_replans >= 2 ) && ! tetris[i].ai_movs.movs.empty() ){
                             if ( rule.turnbase && ai[0].style == 0 ) {
                                 tetris[i].ai_delay = ai_mov_time_base;
                             } else {
@@ -1562,7 +1567,7 @@ void mainscene() {
                                 tetris[i].env_change = 1;
                             }
                         }
-                    } while ( tetris[i].ai_movs_flag == -1 && ( tetris[i].env_change == 0 || tetris[i].ai_plan_started || tetris[i].ai_plan_replans >= 2 ) && tetris[i].ai_delay == 0 && !tetris[i].ai_movs.movs.empty() );
+                    } while ( tetris[i].ai_movs_flag == -1 && ( tetris[i].env_change == 0 || tetris[i].ai_plan_replans >= 2 ) && tetris[i].ai_delay == 0 && !tetris[i].ai_movs.movs.empty() );
                 }
             }
             break;
