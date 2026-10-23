@@ -305,13 +305,24 @@ void initgraph(int Width, int Height, int Flag) {
     if ( SDL_GetHint(SDL_HINT_VIDEODRIVER) == NULL && getenv("WAYLAND_DISPLAY") != NULL ) {
         SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
     }
-    SDL_Init(SDL_INIT_VIDEO);
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        fprintf(stderr, "initgraph: no usable SDL video driver: %s\n", SDL_GetError());
+        exit(1);
+    }
     TTF_Init();
     g.W = Width;
     g.H = Height;
     g.window = SDL_CreateWindow("EGE", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                                 Width, Height, SDL_WINDOW_SHOWN);
+    if (g.window == NULL) {
+        fprintf(stderr, "initgraph: SDL_CreateWindow failed: %s\n", SDL_GetError());
+        exit(1);
+    }
     g.renderer = SDL_CreateRenderer(g.window, -1, SDL_RENDERER_SOFTWARE);
+    if (g.renderer == NULL) {
+        fprintf(stderr, "initgraph: SDL_CreateRenderer failed: %s\n", SDL_GetError());
+        exit(1);
+    }
     g_windowImg.w = Width;
     g_windowImg.h = Height;
     g_windowImg.px.assign((size_t)Width * Height, 0xFF000000u);
